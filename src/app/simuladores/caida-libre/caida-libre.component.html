@@ -9,23 +9,27 @@
 			<h2>Configuración</h2>
 			<div class="controls">
 				<div class="control-group">
-					<label>Altura inicial (m)</label>
-					<input type="range" min="1" max="100" [(ngModel)]="height" (input)="onParamChange()" />
+					<label for="alturaSlider">Altura inicial (m)</label>
+					<input id="alturaSlider" #alturaSlider type="range" min="1" max="100"
+					       [ngModel]="height" (ngModelChange)="height=$event; onParamChange()" />
 					<div class="value-display">{{ height }} m</div>
 				</div>
 				<div class="control-group">
-					<label>Gravedad (m/s²)</label>
-					<input type="range" min="1" max="30" [(ngModel)]="gravity" (input)="onParamChange()" />
+					<label for="gravedadSlider">Gravedad (m/s²)</label>
+					<input id="gravedadSlider" #gravedadSlider type="range" min="1" max="30"
+					       [ngModel]="gravity" (ngModelChange)="gravity=$event; onParamChange()" />
 					<div class="value-display">{{ gravity }} m/s²</div>
 				</div>
 				<div class="control-group">
-					<label>Masa (kg)</label>
-					<input type="range" min="1" max="100" [(ngModel)]="mass" (input)="onParamChange()" />
+					<label for="masaSlider">Masa (kg)</label>
+					<input id="masaSlider" #masaSlider type="range" min="1" max="100"
+					       [ngModel]="mass" (ngModelChange)="mass=$event; onParamChange()" />
 					<div class="value-display">{{ mass }} kg</div>
 				</div>
 				<div class="control-group">
-					<label>Velocidad inicial (m/s)</label>
-						<input type="range" min="0" max="50" [(ngModel)]="initialVelocity" (input)="onParamChange()" />
+					<label for="velocidadSlider">Velocidad inicial (m/s)</label>
+					<input id="velocidadSlider" #velocidadSlider type="range" min="0" max="50"
+					       [ngModel]="initialVelocity" (ngModelChange)="initialVelocity=$event; onParamChange()" />
 					<div class="value-display">{{ initialVelocity }} m/s</div>
 				</div>
 			</div>

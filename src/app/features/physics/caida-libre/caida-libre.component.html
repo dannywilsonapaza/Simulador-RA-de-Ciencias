@@ -1,0 +1,18 @@
+<div class="container">
+  <header><h1>Simulador de Caída Libre</h1><p class="subtitle">Ajusta parámetros y observa la simulación 3D</p></header>
+  <div class="content">
+    <div class="simulator-container">
+      <h2>Configuración</h2>
+      <div class="controls">
+        <div class="control-group"><label for="alturaSlider">Altura inicial (m)</label><input id="alturaSlider" type="range" min="1" max="100" [ngModel]="height" (ngModelChange)="height=$event; onParamChange()" /><div class="value-display">{{ height }} m</div></div>
+        <div class="control-group"><label for="gravedadSlider">Gravedad (m/s²)</label><input id="gravedadSlider" type="range" min="1" max="30" [ngModel]="gravity" (ngModelChange)="gravity=$event; onParamChange()" /><div class="value-display">{{ gravity }} m/s²</div></div>
+        <div class="control-group"><label for="masaSlider">Masa (kg)</label><input id="masaSlider" type="range" min="1" max="100" [ngModel]="mass" (ngModelChange)="mass=$event; onParamChange()" /><div class="value-display">{{ mass }} kg</div></div>
+        <div class="control-group"><label for="velocidadSlider">Velocidad inicial (m/s)</label><input id="velocidadSlider" type="range" min="0" max="50" [ngModel]="initialVelocity" (ngModelChange)="initialVelocity=$event; onParamChange()" /><div class="value-display">{{ initialVelocity }} m/s</div></div>
+      </div>
+      <div class="buttons"><button (click)="startSimulation()" [disabled]="isSimulating">Iniciar</button><button class="secondary" (click)="resetSimulation()">Reiniciar</button></div>
+      <div class="results"><h3>Resultados</h3><div class="result-item"><span>Tiempo de caída:</span><span>{{ fallTime | number:'1.2-2' }} s</span></div><div class="result-item"><span>Velocidad final:</span><span>{{ finalVelocity | number:'1.2-2' }} m/s</span></div><div class="result-item"><span>Energía cinética:</span><span>{{ kineticEnergy | number:'1.2-2' }} J</span></div></div>
+    </div>
+    <div class="visualization"><canvas #simulationCanvas></canvas></div>
+  </div>
+  <div class="ar-info"><h2>Modo RA (beta)</h2><p>Próximamente se integrará visualización en entorno real.</p><button (click)="activateAR()">Activar RA</button></div>
+</div>

@@ -1,1 +1,64 @@
-/* You can add global styles to this file, and also import other style files */
+/* Estilos globales de la aplicación */
+
+/* Reset básico */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  line-height: 1.6;
+  color: #ffffff;
+  background: #0f1419;
+  overflow-x: hidden;
+}
+
+/* Asegurar que el contenido principal no tenga problemas de altura */
+#root, app-root {
+  height: 100vh;
+  display: block;
+}
+
+/* Fix para router-outlet y componentes dinámicos */
+router-outlet + *, router-outlet ~ * {
+  display: block;
+  width: 100%;
+}
+
+/* Utilidades para mejorar la responsividad */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Mejorar la visualización de formularios */
+input, button, select, textarea {
+  font-family: inherit;
+}
+
+/* Transiciones suaves para mejor UX */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Estilos para focus accessibility */
+button:focus,
+input:focus,
+select:focus,
+textarea:focus,
+a:focus {
+  outline: 2px solid #4CAF50;
+  outline-offset: 2px;
+}
+
+/* Mejorar la accesibilidad en dispositivos táctiles */
+@media (hover: none) and (pointer: coarse) {
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
