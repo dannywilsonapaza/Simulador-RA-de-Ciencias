@@ -1,0 +1,122 @@
+<div class="container">
+  <header>
+    <h1>Simulador de Tiro Parabólico</h1>
+    <p class="subtitle">Ajusta parámetros y observa la trayectoria del proyectil en 3D</p>
+  </header>
+
+  <div class="content">
+    <div class="simulator-container">
+      <h2>Configuración</h2>
+      <div class="controls">
+        <div class="control-group">
+          <label for="velocidadSlider">Velocidad inicial (m/s)</label>
+          <input
+            id="velocidadSlider"
+            type="range"
+            min="5"
+            max="50"
+            [ngModel]="initialVelocity"
+            (ngModelChange)="initialVelocity=$event; onParamChange()"
+          />
+          <div class="value-display">{{ initialVelocity }} m/s</div>
+        </div>
+
+        <div class="control-group">
+          <label for="anguloSlider">Ángulo de lanzamiento (°)</label>
+          <input
+            id="anguloSlider"
+            type="range"
+            min="10"
+            max="80"
+            [ngModel]="angle"
+            (ngModelChange)="angle=$event; onParamChange()"
+          />
+          <div class="value-display">{{ angle }}°</div>
+        </div>
+
+        <div class="control-group">
+          <label for="gravedadSlider">Gravedad (m/s²)</label>
+          <input
+            id="gravedadSlider"
+            type="range"
+            min="1"
+            max="20"
+            step="0.1"
+            [ngModel]="gravity"
+            (ngModelChange)="gravity=$event; onParamChange()"
+          />
+          <div class="value-display">{{ gravity | number:'1.1-1' }} m/s²</div>
+        </div>
+
+        <div class="control-group">
+          <label for="masaSlider">Masa (kg)</label>
+          <input
+            id="masaSlider"
+            type="range"
+            min="1"
+            max="20"
+            [ngModel]="mass"
+            (ngModelChange)="mass=$event; onParamChange()"
+          />
+          <div class="value-display">{{ mass }} kg</div>
+        </div>
+
+        <div class="control-group">
+          <label for="alturaSlider">Altura inicial (m)</label>
+          <input
+            id="alturaSlider"
+            type="range"
+            min="0"
+            max="20"
+            [ngModel]="height"
+            (ngModelChange)="height=$event; onParamChange()"
+          />
+          <div class="value-display">{{ height }} m</div>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button (click)="startSimulation()" [disabled]="isSimulating">
+          Iniciar Simulación
+        </button>
+        <button class="secondary" (click)="resetSimulation()">
+          Reiniciar
+        </button>
+      </div>
+
+      <div class="results">
+        <h3>Resultados Calculados</h3>
+        <div class="result-item">
+          <span>Tiempo de vuelo:</span>
+          <span>{{ flightTime | number:'1.2-2' }} s</span>
+        </div>
+        <div class="result-item">
+          <span>Altura máxima:</span>
+          <span>{{ maxHeight | number:'1.2-2' }} m</span>
+        </div>
+        <div class="result-item">
+          <span>Alcance horizontal:</span>
+          <span>{{ range | number:'1.2-2' }} m</span>
+        </div>
+        <div class="result-item">
+          <span>Velocidad inicial:</span>
+          <span>{{ maxVelocity | number:'1.2-2' }} m/s</span>
+        </div>
+        <div class="result-item">
+          <span>Energía cinética:</span>
+          <span>{{ kineticEnergy | number:'1.2-2' }} J</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="visualization">
+      <canvas #simulationCanvas></canvas>
+    </div>
+  </div>
+
+  <div class="ar-info">
+    <h2>Modo RA (beta)</h2>
+    <p>Próximamente se integrará visualización en entorno real para tiro parabólico.</p>
+    <button (click)="activateAR()">Activar RA</button>
+  </div>
+</div>
