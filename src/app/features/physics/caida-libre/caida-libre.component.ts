@@ -33,6 +33,10 @@ export class CaidaLibreComponent implements AfterViewInit, OnDestroy {
   isSimulating = false;
   private startTime = 0;
   private scaledHeight = 0;
+  private maxViewHeight = 30; // Altura máxima visible en la escena
+  private floor!: THREE.Mesh;
+  private axesHelper!: THREE.AxesHelper;
+  private gridHelper!: THREE.GridHelper;
   constructor(private telemetry: TelemetryService) {}
   ngAfterViewInit() {
     this.telemetry.startSession('caida-libre');
@@ -69,6 +73,7 @@ export class CaidaLibreComponent implements AfterViewInit, OnDestroy {
       0.1,
       1000
     );
+    // La posición inicial se ajustará dinámicamente en resetSimulation()
     this.camera.position.set(0, 5, 15);
 
     this.renderer = new THREE.WebGLRenderer({
@@ -88,18 +93,19 @@ export class CaidaLibreComponent implements AfterViewInit, OnDestroy {
     const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
     this.scene.add(ambientLight);
 
-    // Suelo
-    const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(30, 30),
+    // Suelo más grande para accommodar alturas mayores
+    const floorSize = Math.max(30, this.height * 2);
+    this.floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(floorSize, floorSize),
       new THREE.MeshStandardMaterial({
         color: 0x0077be,
         metalness: 0.2,
         roughness: 0.5,
       })
     );
-    floor.rotation.x = -Math.PI / 2;
-    floor.receiveShadow = true;
-    this.scene.add(floor);
+    this.floor.rotation.x = -Math.PI / 2;
+    this.floor.receiveShadow = true;
+    this.scene.add(this.floor);
 
     // Esfera
     this.sphere = new THREE.Mesh(
@@ -113,9 +119,12 @@ export class CaidaLibreComponent implements AfterViewInit, OnDestroy {
     this.sphere.castShadow = true;
     this.scene.add(this.sphere);
 
-    // Helpers
-    this.scene.add(new THREE.AxesHelper(5));
-    this.scene.add(new THREE.GridHelper(30, 30));
+    // Helpers adaptativos
+    this.axesHelper = new THREE.AxesHelper(Math.max(5, this.height * 0.5));
+    this.scene.add(this.axesHelper);
+    const gridSize = Math.max(30, this.height * 2);
+    this.gridHelper = new THREE.GridHelper(gridSize, gridSize);
+    this.scene.add(this.gridHelper);
 
     // Event listeners
     window.addEventListener('resize', this.onResize);
@@ -157,7 +166,17 @@ export class CaidaLibreComponent implements AfterViewInit, OnDestroy {
     this.isSimulating = false;
     if (this.animationId) cancelAnimationFrame(this.animationId);
     this.animationId = undefined;
-    this.scaledHeight = this.height / 2;
+
+    // Calcular escala dinámica basada en la altura
+    const scale = Math.min(1, this.maxViewHeight / this.height);
+    this.scaledHeight = this.height * scale;
+
+    // Actualizar elementos de la escena para adaptarse a la nueva escala
+    this.updateSceneElements();
+
+    // Ajustar posición de la cámara basada en la altura escalada
+    this.updateCameraPosition();
+
     if (this.sphere) {
       this.sphere.position.set(0, this.scaledHeight, 0);
       this.sphere.rotation.set(0, 0, 0);
@@ -166,12 +185,24 @@ export class CaidaLibreComponent implements AfterViewInit, OnDestroy {
     this.renderFrame();
   }
   onParamChange() {
-    if (!this.isSimulating) this.resetSimulation();
+    if (!this.isSimulating) {
+      this.resetSimulation();
+    }
   }
   private animate = () => {
     if (!this.isSimulating) return;
     const elapsed = (performance.now() - this.startTime) / 1000;
-    const newY = this.scaledHeight - 0.5 * this.gravity * elapsed * elapsed;
+
+    // Calcular la escala actual para mantener consistencia
+    const scale = Math.min(1, this.maxViewHeight / this.height);
+    const scaledGravity = this.gravity * scale;
+    const scaledInitialVelocity = this.initialVelocity * scale;
+
+    // Calcular nueva posición usando física escalada
+    const newY = this.scaledHeight
+      + scaledInitialVelocity * elapsed
+      - 0.5 * scaledGravity * elapsed * elapsed;
+
     if (newY <= 1) {
       this.sphere.position.y = 1;
       this.isSimulating = false;
@@ -192,6 +223,48 @@ export class CaidaLibreComponent implements AfterViewInit, OnDestroy {
     }
     this.renderer.render(this.scene, this.camera);
   }
+
+  private updateCameraPosition() {
+    if (!this.camera) return;
+
+    // Calcular posición óptima de la cámara basada en la altura escalada
+    const cameraY = Math.max(5, this.scaledHeight * 0.6);
+    const cameraZ = Math.max(15, this.scaledHeight * 1.2);
+
+    this.camera.position.set(0, cameraY, cameraZ);
+    this.camera.lookAt(0, this.scaledHeight * 0.5, 0);
+  }
+
+  private updateSceneElements() {
+    if (!this.scene || !this.floor || !this.axesHelper || !this.gridHelper) return;
+
+    // Actualizar suelo
+    this.scene.remove(this.floor);
+    const floorSize = Math.max(30, this.height * 2);
+    this.floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(floorSize, floorSize),
+      new THREE.MeshStandardMaterial({
+        color: 0x0077be,
+        metalness: 0.2,
+        roughness: 0.5,
+      })
+    );
+    this.floor.rotation.x = -Math.PI / 2;
+    this.floor.receiveShadow = true;
+    this.scene.add(this.floor);
+
+    // Actualizar helpers
+    this.scene.remove(this.axesHelper);
+    this.scene.remove(this.gridHelper);
+
+    this.axesHelper = new THREE.AxesHelper(Math.max(5, this.height * 0.5));
+    this.scene.add(this.axesHelper);
+
+    const gridSize = Math.max(30, this.height * 2);
+    this.gridHelper = new THREE.GridHelper(gridSize, gridSize);
+    this.scene.add(this.gridHelper);
+  }
+
   activateAR() {
     alert('Modo RA (placeholder).');
   }
