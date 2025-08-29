@@ -1,0 +1,98 @@
+<div class="container">
+  <header>
+    <h1>Simulador de Péndulo Simple</h1>
+    <p class="subtitle">Observa el movimiento armónico simple y la conservación de energía</p>
+  </header>
+
+  <div class="content">
+    <div class="simulator-container">
+      <h2>Configuración</h2>
+      <div class="controls">
+        <div class="control-group">
+          <label for="longitudSlider">Longitud del péndulo (m)</label>
+          <input id="longitudSlider" type="range" min="0.5" max="5" step="0.1"
+                 [ngModel]="length" (ngModelChange)="length=$event; onParamChange()" />
+          <div class="value-display">{{ length }} m</div>
+        </div>
+
+        <div class="control-group">
+          <label for="anguloSlider">Ángulo inicial (°)</label>
+          <input id="anguloSlider" type="range" min="5" max="85" step="1"
+                 [ngModel]="initialAngle" (ngModelChange)="initialAngle=$event; onParamChange()" />
+          <div class="value-display">{{ initialAngle }}°</div>
+        </div>
+
+        <div class="control-group">
+          <label for="masaSlider">Masa del péndulo (kg)</label>
+          <input id="masaSlider" type="range" min="0.1" max="5" step="0.1"
+                 [ngModel]="mass" (ngModelChange)="mass=$event; onParamChange()" />
+          <div class="value-display">{{ mass }} kg</div>
+        </div>
+
+        <div class="control-group">
+          <label for="gravedadSlider">Gravedad (m/s²)</label>
+          <input id="gravedadSlider" type="range" min="1" max="15" step="0.1"
+                 [ngModel]="gravity" (ngModelChange)="gravity=$event; onParamChange()" />
+          <div class="value-display">{{ gravity }} m/s²</div>
+        </div>
+
+        <div class="control-group">
+          <label for="amortiguamientoSlider">Amortiguamiento</label>
+          <input id="amortiguamientoSlider" type="range" min="0" max="0.1" step="0.001"
+                 [ngModel]="damping" (ngModelChange)="damping=$event; onParamChange()" />
+          <div class="value-display">{{ (damping * 100) | number:'1.1-1' }}%</div>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button (click)="startSimulation()" [disabled]="isSimulating">Iniciar</button>
+        <button class="secondary" (click)="resetSimulation()">Reiniciar</button>
+        <button class="tertiary" (click)="toggleEnergyGraph()"
+                [class.active]="showEnergyGraph">
+          {{ showEnergyGraph ? 'Ocultar' : 'Mostrar' }} Energía
+        </button>
+      </div>
+
+      <div class="results">
+        <h3>Resultados</h3>
+        <div class="result-item">
+          <span>Período teórico:</span>
+          <span>{{ theoreticalPeriod | number:'1.2-2' }} s</span>
+        </div>
+        <div class="result-item">
+          <span>Frecuencia:</span>
+          <span>{{ frequency | number:'1.2-2' }} Hz</span>
+        </div>
+        <div class="result-item">
+          <span>Velocidad máxima:</span>
+          <span>{{ maxVelocity | number:'1.2-2' }} m/s</span>
+        </div>
+        <div class="result-item">
+          <span>Energía total:</span>
+          <span>{{ totalEnergy | number:'1.2-2' }} J</span>
+        </div>
+        <div class="result-item">
+          <span>Energía cinética:</span>
+          <span>{{ kineticEnergy | number:'1.2-2' }} J</span>
+        </div>
+        <div class="result-item">
+          <span>Energía potencial:</span>
+          <span>{{ potentialEnergy | number:'1.2-2' }} J</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="visualization">
+      <canvas #simulationCanvas></canvas>
+      <div class="energy-graph" *ngIf="showEnergyGraph">
+        <canvas #energyCanvas></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="ar-info">
+    <h2>Modo RA (beta)</h2>
+    <p>Visualiza el péndulo en tu entorno real con seguimiento de energía en tiempo real.</p>
+    <button (click)="activateAR()">Activar RA</button>
+  </div>
+</div>
