@@ -1,0 +1,288 @@
+<div class="simulation-container">
+  <!-- Header -->
+  <div class="simulation-header">
+    <h2 class="simulation-title">Sistema Masa-Resorte</h2>
+    <div class="simulation-description">
+      <p>Simulación de un sistema masa-resorte vertical con amortiguamiento y gravedad.</p>
+    </div>
+  </div>
+
+  <!-- Main content grid -->
+  <div class="simulation-grid">
+    <!-- Control Panel -->
+    <aside class="control-panel">
+      <div class="panel-section">
+        <h3 class="panel-title">Parámetros del Sistema</h3>
+
+        <!-- Masa -->
+        <div class="input-group">
+          <label for="mass">Masa (kg)</label>
+          <input
+            id="mass"
+            type="number"
+            [(ngModel)]="mass"
+            (change)="onParamChange()"
+            min="0.1"
+            max="10"
+            step="0.1"
+            [disabled]="isSimulating">
+          <small>Masa del objeto suspendido</small>
+        </div>
+
+        <!-- Constante del resorte -->
+        <div class="input-group">
+          <label for="springConstant">Constante k (N/m)</label>
+          <input
+            id="springConstant"
+            type="number"
+            [(ngModel)]="springConstant"
+            (change)="onParamChange()"
+            min="1"
+            max="200"
+            step="1"
+            [disabled]="isSimulating">
+          <small>Rigidez del resorte</small>
+        </div>
+
+        <!-- Longitud natural -->
+        <div class="input-group">
+          <label for="naturalLength">Longitud natural (m)</label>
+          <input
+            id="naturalLength"
+            type="number"
+            [(ngModel)]="naturalLength"
+            (change)="onParamChange()"
+            min="0.5"
+            max="5"
+            step="0.1"
+            [disabled]="isSimulating">
+          <small>Longitud sin carga</small>
+        </div>
+
+        <!-- Desplazamiento inicial -->
+        <div class="input-group">
+          <label for="initialDisplacement">Desplazamiento inicial (m)</label>
+          <input
+            id="initialDisplacement"
+            type="number"
+            [(ngModel)]="initialDisplacement"
+            (change)="onParamChange()"
+            min="0"
+            max="3"
+            step="0.1"
+            [disabled]="isSimulating">
+          <small>Estiramiento inicial desde la longitud natural</small>
+        </div>
+
+        <!-- Amortiguamiento -->
+        <div class="input-group">
+          <label for="damping">Amortiguamiento</label>
+          <input
+            id="damping"
+            type="number"
+            [(ngModel)]="damping"
+            (change)="onParamChange()"
+            min="0"
+            max="2"
+            step="0.01"
+            [disabled]="isSimulating">
+          <small>Factor de fricción (0 = sin fricción)</small>
+        </div>
+
+        <!-- Gravedad -->
+        <div class="input-group">
+          <label for="gravity">Gravedad (m/s²)</label>
+          <input
+            id="gravity"
+            type="number"
+            [(ngModel)]="gravity"
+            (change)="onParamChange()"
+            min="0.1"
+            max="20"
+            step="0.1"
+            [disabled]="isSimulating">
+          <small>Aceleración gravitacional</small>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="panel-section">
+        <h3 class="panel-title">Controles</h3>
+        <div class="button-group">
+          <button
+            class="btn btn-primary"
+            (click)="startSimulation()"
+            [disabled]="isSimulating">
+            <span class="btn-icon">▶️</span>
+            Iniciar
+          </button>
+
+          <button
+            class="btn btn-secondary"
+            (click)="resetSimulation()">
+            <span class="btn-icon">🔄</span>
+            Reiniciar
+          </button>
+
+          <button
+            class="btn btn-accent"
+            (click)="activateAR()">
+            <span class="btn-icon">📱</span>
+            Modo RA
+          </button>
+        </div>
+
+        <!-- Energy Graph Toggle -->
+        <div class="toggle-group">
+          <button
+            class="btn btn-outline"
+            (click)="toggleEnergyGraph()"
+            [class.active]="showEnergyGraph">
+            <span class="btn-icon">📊</span>
+            {{ showEnergyGraph ? 'Ocultar' : 'Mostrar' }} Energías
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Visualization Area -->
+    <main class="visualization-area">
+      <!-- 3D Canvas -->
+      <div class="canvas-container">
+        <canvas
+          #simulationCanvas
+          class="simulation-canvas"
+          [class.simulating]="isSimulating">
+        </canvas>
+
+        <!-- Simulation Status -->
+        <div class="simulation-status" [class.active]="isSimulating">
+          <div class="status-indicator">
+            <span class="pulse-dot"></span>
+            Simulando...
+          </div>
+        </div>
+      </div>
+
+      <!-- Energy Graph -->
+      <div class="energy-graph-container" [class.visible]="showEnergyGraph">
+        <div class="graph-header">
+          <h4>Gráfico de Energías</h4>
+          <button class="close-graph" (click)="toggleEnergyGraph()">✕</button>
+        </div>
+        <canvas
+          #energyCanvas
+          class="energy-canvas">
+        </canvas>
+      </div>
+    </main>
+
+    <!-- Results Panel -->
+    <aside class="results-panel">
+      <div class="panel-section">
+        <h3 class="panel-title">Propiedades del Sistema</h3>
+
+        <div class="result-grid">
+          <div class="result-item">
+            <span class="result-label">Posición de equilibrio:</span>
+            <span class="result-value">{{ equilibriumPosition | number:'1.3-3' }} m</span>
+          </div>
+
+          <div class="result-item">
+            <span class="result-label">Frecuencia angular (ω):</span>
+            <span class="result-value">{{ angularFrequency | number:'1.2-2' }} rad/s</span>
+          </div>
+
+          <div class="result-item">
+            <span class="result-label">Período (T):</span>
+            <span class="result-value">{{ period | number:'1.3-3' }} s</span>
+          </div>
+
+          <div class="result-item">
+            <span class="result-label">Frecuencia (f):</span>
+            <span class="result-value">{{ frequency | number:'1.3-3' }} Hz</span>
+          </div>
+
+          <div class="result-item">
+            <span class="result-label">Amplitud:</span>
+            <span class="result-value">{{ amplitude | number:'1.3-3' }} m</span>
+          </div>
+
+          <div class="result-item">
+            <span class="result-label">Velocidad máxima:</span>
+            <span class="result-value">{{ maxVelocity | number:'1.2-2' }} m/s</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <h3 class="panel-title">Energías Actuales</h3>
+
+        <div class="energy-display">
+          <div class="energy-item kinetic">
+            <span class="energy-label">
+              <span class="energy-dot kinetic-dot"></span>
+              Cinética
+            </span>
+            <span class="energy-value">{{ kineticEnergy | number:'1.2-2' }} J</span>
+          </div>
+
+          <div class="energy-item elastic">
+            <span class="energy-label">
+              <span class="energy-dot elastic-dot"></span>
+              Elástica
+            </span>
+            <span class="energy-value">{{ elasticEnergy | number:'1.2-2' }} J</span>
+          </div>
+
+          <div class="energy-item gravitational">
+            <span class="energy-label">
+              <span class="energy-dot gravitational-dot"></span>
+              Gravitacional
+            </span>
+            <span class="energy-value">{{ gravitationalEnergy | number:'1.2-2' }} J</span>
+          </div>
+
+          <div class="energy-item total">
+            <span class="energy-label">
+              <span class="energy-dot total-dot"></span>
+              Total
+            </span>
+            <span class="energy-value">{{ (kineticEnergy + potentialEnergy) | number:'1.2-2' }} J</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Physics Info -->
+      <div class="panel-section">
+        <h3 class="panel-title">Información Física</h3>
+        <div class="info-content">
+          <div class="formula-box">
+            <h4>Ecuación de movimiento:</h4>
+            <p class="formula">ma = -k(x - x₀) - cv + mg</p>
+          </div>
+
+          <div class="formula-box">
+            <h4>Frecuencia angular:</h4>
+            <p class="formula">ω = √(k/m)</p>
+          </div>
+
+          <div class="formula-box">
+            <h4>Período:</h4>
+            <p class="formula">T = 2π/ω = 2π√(m/k)</p>
+          </div>
+
+          <div class="info-list">
+            <h4>Características:</h4>
+            <ul>
+              <li>Sistema masa-resorte vertical</li>
+              <li>Incluye efecto gravitacional</li>
+              <li>Amortiguamiento viscoso</li>
+              <li>Movimiento armónico simple (sin amortiguamiento)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>

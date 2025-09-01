@@ -1,0 +1,498 @@
+<div class="simulation-container">
+  <!-- Panel de Control Principal -->
+  <div class="control-panel">
+    <div class="control-header">
+      <h2 class="control-title">⚡ Campo Eléctrico</h2>
+      <div class="simulation-controls">
+        <button
+          class="btn btn-primary"
+          [class.btn-success]="isRunning"
+          (click)="isRunning ? stopSimulation() : startSimulation()">
+          {{ isRunning ? '⏸️ Pausar' : '▶️ Iniciar' }}
+        </button>
+        <button class="btn btn-secondary" (click)="resetSimulation()">
+          🔄 Reiniciar
+        </button>
+      </div>
+    </div>
+
+    <!-- Configuración de Cargas -->
+    <div class="config-section">
+      <h3 class="section-title">🔋 Configuración de Cargas</h3>
+
+      <div class="parameter-grid">
+        <div class="parameter-group">
+          <label class="parameter-label">
+            Carga 1 (μC)
+            <span class="parameter-value">{{ charge1 | number:'1.1-2' }}</span>
+          </label>
+          <input
+            type="range"
+            class="parameter-slider"
+            [(ngModel)]="charge1"
+            min="-5"
+            max="5"
+            step="0.1"
+            (input)="updateParameters()">
+          <div class="charge-indicator" [class.positive]="charge1 > 0" [class.negative]="charge1 < 0">
+            {{ charge1 > 0 ? '+' : charge1 < 0 ? '-' : '0' }}
+          </div>
+        </div>
+
+        <div class="parameter-group">
+          <label class="parameter-label">
+            Carga 2 (μC)
+            <span class="parameter-value">{{ charge2 | number:'1.1-2' }}</span>
+          </label>
+          <input
+            type="range"
+            class="parameter-slider"
+            [(ngModel)]="charge2"
+            min="-5"
+            max="5"
+            step="0.1"
+            (input)="updateParameters()">
+          <div class="charge-indicator" [class.positive]="charge2 > 0" [class.negative]="charge2 < 0">
+            {{ charge2 > 0 ? '+' : charge2 < 0 ? '-' : '0' }}
+          </div>
+        </div>
+
+        <div class="parameter-group">
+          <label class="parameter-label">
+            Separación (m)
+            <span class="parameter-value">{{ separation | number:'1.1-2' }}</span>
+          </label>
+          <input
+            type="range"
+            class="parameter-slider"
+            [(ngModel)]="separation"
+            min="0.5"
+            max="8"
+            step="0.1"
+            (input)="updateParameters()">
+        </div>
+
+        <div class="parameter-group">
+          <label class="parameter-label">
+            Carga de Prueba (μC)
+            <span class="parameter-value">{{ testCharge | number:'1.1-3' }}</span>
+          </label>
+          <input
+            type="range"
+            class="parameter-slider"
+            [(ngModel)]="testCharge"
+            min="-1"
+            max="1"
+            step="0.01"
+            (input)="calculateResults()">
+        </div>
+
+        <div class="parameter-group">
+          <label class="parameter-label">
+            Masa de Prueba (μg)
+            <span class="parameter-value">{{ (testChargeMass * 1e9) | number:'1.1-3' }}</span>
+          </label>
+          <input
+            type="range"
+            class="parameter-slider"
+            [(ngModel)]="testChargeMass"
+            min="1e-9"
+            max="1e-3"
+            step="1e-9"
+            (input)="calculateResults()">
+        </div>
+
+        <div class="parameter-group">
+          <label class="parameter-label">
+            Velocidad de Simulación
+            <span class="parameter-value">{{ animationSpeed | number:'1.1-1' }}x</span>
+          </label>
+          <input
+            type="range"
+            class="parameter-slider"
+            [(ngModel)]="animationSpeed"
+            min="0.1"
+            max="3"
+            step="0.1">
+        </div>
+      </div>
+    </div>
+
+    <!-- Condiciones Iniciales -->
+    <div class="config-section">
+      <h3 class="section-title">📍 Posición y Velocidad Inicial</h3>
+
+      <div class="parameter-grid">
+        <div class="parameter-group">
+          <label class="parameter-label">
+            Posición X (m)
+            <span class="parameter-value">{{ testChargeX | number:'1.1-2' }}</span>
+          </label>
+          <input
+            type="range"
+            class="parameter-slider"
+            [(ngModel)]="testChargeX"
+            min="-4"
+            max="4"
+            step="0.1"
+            (input)="updateTestChargePosition(); calculateResults()">
+        </div>
+
+        <div class="parameter-group">
+          <label class="parameter-label">
+            Posición Y (m)
+            <span class="parameter-value">{{ testChargeY | number:'1.1-2' }}</span>
+          </label>
+          <input
+            type="range"
+            class="parameter-slider"
+            [(ngModel)]="testChargeY"
+            min="-4"
+            max="4"
+            step="0.1"
+            (input)="updateTestChargePosition(); calculateResults()">
+        </div>
+
+        <div class="parameter-group">
+          <label class="parameter-label">
+            Velocidad X (m/s)
+            <span class="parameter-value">{{ testChargeVx | number:'1.1-2' }}</span>
+          </label>
+          <input
+            type="range"
+            class="parameter-slider"
+            [(ngModel)]="testChargeVx"
+            min="-5"
+            max="5"
+            step="0.1">
+        </div>
+
+        <div class="parameter-group">
+          <label class="parameter-label">
+            Velocidad Y (m/s)
+            <span class="parameter-value">{{ testChargeVy | number:'1.1-2' }}</span>
+          </label>
+          <input
+            type="range"
+            class="parameter-slider"
+            [(ngModel)]="testChargeVy"
+            min="-5"
+            max="5"
+            step="0.1">
+        </div>
+      </div>
+    </div>
+
+    <!-- Opciones de Visualización -->
+    <div class="config-section">
+      <h3 class="section-title">👁️ Visualización</h3>
+
+      <div class="visualization-options">
+        <div class="option-group">
+          <button
+            class="btn btn-toggle"
+            [class.active]="showFieldLines"
+            (click)="toggleFieldLines()">
+            🌊 Líneas de Campo
+          </button>
+
+          <button
+            class="btn btn-toggle"
+            [class.active]="showEquipotentials"
+            (click)="toggleEquipotentials()">
+            🗺️ Equipotenciales
+          </button>
+        </div>
+
+        <div class="option-group">
+          <button
+            class="btn btn-toggle"
+            [class.active]="showVectors"
+            (click)="toggleVectors()">
+            ➡️ Vectores de Campo
+          </button>
+
+          <button
+            class="btn btn-toggle"
+            [class.active]="showTrajectory"
+            (click)="toggleTrajectory()">
+            🛤️ Trayectoria
+          </button>
+        </div>
+
+        <div class="parameter-group">
+          <label class="parameter-label">
+            Densidad de Líneas
+            <span class="parameter-value">{{ fieldLinesCount }}</span>
+          </label>
+          <input
+            type="range"
+            class="parameter-slider"
+            [(ngModel)]="fieldLinesCount"
+            min="8"
+            max="32"
+            step="2"
+            (input)="createFieldVisualization()">
+        </div>
+
+        <div class="parameter-group">
+          <label class="parameter-label">
+            Densidad de Vectores
+            <span class="parameter-value">{{ vectorGridSize }}×{{ vectorGridSize }}</span>
+          </label>
+          <input
+            type="range"
+            class="parameter-slider"
+            [(ngModel)]="vectorGridSize"
+            min="8"
+            max="20"
+            step="1"
+            (input)="createFieldVisualization()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Área de Visualización -->
+  <div class="visualization-area">
+    <!-- Canvas 3D Principal -->
+    <div class="canvas-container">
+      <canvas #simulationCanvas class="simulation-canvas"></canvas>
+      <canvas #fieldCanvas class="field-overlay"></canvas>
+
+      <!-- Información de Interacción -->
+      <div class="interaction-hint">
+        💡 Haz clic en el canvas para mover la carga de prueba
+      </div>
+    </div>
+
+    <!-- Panel de Resultados -->
+    <div class="results-panel">
+      <h3 class="section-title">📊 Resultados en Tiempo Real</h3>
+
+      <!-- Campo Eléctrico -->
+      <div class="result-card">
+        <h4 class="result-title">⚡ Campo Eléctrico</h4>
+        <div class="result-grid">
+          <div class="result-item">
+            <span class="result-label">Ex:</span>
+            <span class="result-value">{{ electricField.x | number:'1.2-2' }} N/C</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Ey:</span>
+            <span class="result-value">{{ electricField.y | number:'1.2-2' }} N/C</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">|E|:</span>
+            <span class="result-value">{{ electricField.magnitude | number:'1.2-2' }} N/C</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Potencial Eléctrico -->
+      <div class="result-card">
+        <h4 class="result-title">🔋 Potencial Eléctrico</h4>
+        <div class="result-item">
+          <span class="result-label">V:</span>
+          <span class="result-value">{{ electricPotential | number:'1.2-2' }} V</span>
+        </div>
+      </div>
+
+      <!-- Fuerza -->
+      <div class="result-card">
+        <h4 class="result-title">💪 Fuerza sobre Carga de Prueba</h4>
+        <div class="result-grid">
+          <div class="result-item">
+            <span class="result-label">Fx:</span>
+            <span class="result-value">{{ forceOnTestCharge.x | number:'1.2-6' }} N</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Fy:</span>
+            <span class="result-value">{{ forceOnTestCharge.y | number:'1.2-6' }} N</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">|F|:</span>
+            <span class="result-value">{{ forceOnTestCharge.magnitude | number:'1.2-6' }} N</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Energías -->
+      <div class="result-card">
+        <h4 class="result-title">⚡ Energías</h4>
+        <div class="energy-bars">
+          <div class="energy-bar">
+            <span class="energy-label">Cinética:</span>
+            <div class="energy-progress">
+              <div class="energy-fill kinetic"
+                   [style.width.%]="Math.abs(totalEnergy) > 0 ? (kineticEnergy / Math.abs(totalEnergy)) * 100 : 0">
+              </div>
+            </div>
+            <span class="energy-value">{{ kineticEnergy | number:'1.2-9' }} J</span>
+          </div>
+
+          <div class="energy-bar">
+            <span class="energy-label">Potencial:</span>
+            <div class="energy-progress">
+              <div class="energy-fill potential"
+                   [style.width.%]="Math.abs(totalEnergy) > 0 ? (Math.abs(potentialEnergy) / Math.abs(totalEnergy)) * 100 : 0">
+              </div>
+            </div>
+            <span class="energy-value">{{ potentialEnergy | number:'1.2-9' }} J</span>
+          </div>
+
+          <div class="energy-bar">
+            <span class="energy-label">Total:</span>
+            <div class="energy-progress">
+              <div class="energy-fill total" style="width: 100%"></div>
+            </div>
+            <span class="energy-value">{{ totalEnergy | number:'1.2-9' }} J</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Información del Sistema -->
+      <div class="result-card">
+        <h4 class="result-title">ℹ️ Información del Sistema</h4>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Tiempo:</span>
+            <span class="info-value">{{ time | number:'1.2-2' }} s</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Constante k:</span>
+            <span class="info-value">{{ k_e | number:'1.2-2' }} N⋅m²/C²</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Posición:</span>
+            <span class="info-value">({{ testChargeX | number:'1.1-2' }}, {{ testChargeY | number:'1.1-2' }}) m</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Velocidad:</span>
+            <span class="info-value">({{ testChargeVx | number:'1.1-2' }}, {{ testChargeVy | number:'1.1-2' }}) m/s</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel de Ecuaciones -->
+  <div class="equations-panel">
+    <h3 class="section-title">📖 Ecuaciones Fundamentales</h3>
+
+    <div class="equation-grid">
+      <div class="equation-card">
+        <h4 class="equation-title">Campo Eléctrico</h4>
+        <div class="equation">
+          <math>
+            <mi>E</mi>
+            <mo>=</mo>
+            <mi>k</mi>
+            <mfrac>
+              <mi>q</mi>
+              <msup><mi>r</mi><mn>2</mn></msup>
+            </mfrac>
+          </math>
+        </div>
+        <p class="equation-description">
+          Campo eléctrico debido a una carga puntual
+        </p>
+      </div>
+
+      <div class="equation-card">
+        <h4 class="equation-title">Potencial Eléctrico</h4>
+        <div class="equation">
+          <math>
+            <mi>V</mi>
+            <mo>=</mo>
+            <mi>k</mi>
+            <mfrac>
+              <mi>q</mi>
+              <mi>r</mi>
+            </mfrac>
+          </math>
+        </div>
+        <p class="equation-description">
+          Potencial eléctrico debido a una carga puntual
+        </p>
+      </div>
+
+      <div class="equation-card">
+        <h4 class="equation-title">Fuerza de Coulomb</h4>
+        <div class="equation">
+          <math>
+            <mi>F</mi>
+            <mo>=</mo>
+            <mi>q</mi>
+            <mi>E</mi>
+            <mo>=</mo>
+            <mi>k</mi>
+            <mfrac>
+              <msub><mi>q</mi><mn>1</mn></msub>
+              <msub><mi>q</mi><mn>2</mn></msub>
+              <msup><mi>r</mi><mn>2</mn></msup>
+            </mfrac>
+          </math>
+        </div>
+        <p class="equation-description">
+          Fuerza entre dos cargas puntuales
+        </p>
+      </div>
+
+      <div class="equation-card">
+        <h4 class="equation-title">Principio de Superposición</h4>
+        <div class="equation">
+          <math>
+            <msub><mi>E</mi><mi>total</mi></msub>
+            <mo>=</mo>
+            <mo>∑</mo>
+            <msub><mi>E</mi><mi>i</mi></msub>
+          </math>
+        </div>
+        <p class="equation-description">
+          El campo total es la suma vectorial de los campos individuales
+        </p>
+      </div>
+
+      <div class="equation-card">
+        <h4 class="equation-title">Energía Potencial</h4>
+        <div class="equation">
+          <math>
+            <mi>U</mi>
+            <mo>=</mo>
+            <mi>q</mi>
+            <mi>V</mi>
+            <mo>=</mo>
+            <mi>k</mi>
+            <mfrac>
+              <msub><mi>q</mi><mn>1</mn></msub>
+              <msub><mi>q</mi><mn>2</mn></msub>
+              <mi>r</mi>
+            </mfrac>
+          </math>
+        </div>
+        <p class="equation-description">
+          Energía potencial eléctrica del sistema
+        </p>
+      </div>
+
+      <div class="equation-card">
+        <h4 class="equation-title">Conservación de Energía</h4>
+        <div class="equation">
+          <math>
+            <mi>E</mi>
+            <mo>=</mo>
+            <mi>K</mi>
+            <mo>+</mo>
+            <mi>U</mi>
+            <mo>=</mo>
+            <mi>constante</mi>
+          </math>
+        </div>
+        <p class="equation-description">
+          La energía mecánica total se conserva
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
