@@ -1,5 +1,8 @@
 /* Estilos globales de la aplicación - Sistema Responsive Inspirado en Atlassian */
 
+/* Importar PrimeIcons */
+@import 'primeicons/primeicons.css';
+
 /* Reset básico */
 html, body {
   margin: 0;
@@ -18,7 +21,7 @@ body {
 
 /* Asegurar que el contenido principal no tenga problemas de altura */
 #root, app-root {
-  height: 100vh;
+  min-height: 100vh;
   display: block;
 }
 

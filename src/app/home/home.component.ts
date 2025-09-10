@@ -1,52 +1,173 @@
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, inject, computed } from '@angular/core';
+import { RouterLink, Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { AuthService, UserRole } from '../features/auth';
 
 @Component({
   standalone: true,
   selector: 'app-home',
-  imports: [RouterLink],
+  imports: [RouterLink, CommonModule],
   template: `
     <div class="app-wrapper">
       <div class="main-content-wrapper">
-        <!-- Header responsivo -->
-        <header class="flex items-center justify-between px-4 md:px-8 py-6 border-b border-white/10">
-          <h1 class="text-2xl md:text-3xl font-bold">Laboratorio Virtual RA</h1>
-          <div class="hidden md:block text-sm opacity-80">
-            Simulaciones de Física con Realidad Aumentada
+        <!-- Header responsivo con información del usuario -->
+        <header class="flex items-center justify-between px-4 md:px-8 py-6 border-b border-white-10">
+          <div>
+            <h1 class="text-2xl md:text-3xl font-bold">{{ getDashboardTitle() }}</h1>
+            <div class="text-sm opacity-80 mt-1">
+              <span *ngIf="authService.currentUser()">
+                Bienvenido, {{ authService.currentUser()?.name }}
+              </span>
+              <span class="ml-2 px-2 py-1 bg-blue-500 text-white rounded text-xs">
+                {{ getRoleDisplayName() }}
+              </span>
+            </div>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="hidden md:block text-sm opacity-80">
+              Simulaciones de Física con RA
+            </div>
+            <button
+              (click)="logout()"
+              class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors text-sm"
+            >
+              <i class="fas fa-sign-out-alt mr-2"></i>
+              Cerrar Sesión
+            </button>
           </div>
         </header>
 
         <!-- Contenido principal -->
         <main class="flex-1 container mx-auto px-4 md:px-8 py-8">
           <div class="max-w-4xl mx-auto">
-            <!-- Descripción -->
+            <!-- Descripción personalizada por rol -->
             <div class="text-center mb-8">
               <p class="text-lg md:text-xl opacity-90 mb-4">
-                Selecciona un área para comenzar tu experiencia de aprendizaje
+                {{ getDashboardDescription() }}
               </p>
-              <div class="w-16 h-0.5 bg-gradient-to-r from-purple-500 to-blue-500 mx-auto"></div>
+              <div class="w-16 h-0-5 bg-gradient-to-r from-purple-500 to-blue-500 mx-auto"></div>
             </div>
 
-            <!-- Grid responsivo de opciones -->
+            <!-- Grid responsivo de opciones filtradas por rol -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-              <!-- Simulaciones de Física -->
-              <a routerLink="/fisica" class="navigation-card group">
-                <div class="card-icon">
-                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <h3 class="card-title">Simulaciones de Física</h3>
-                <p class="card-description">
-                  Experimenta con caída libre, movimiento parabólico y péndulo simple
-                </p>
-                <div class="card-features">
-                  <span class="feature-tag">3D</span>
-                  <span class="feature-tag">Interactivo</span>
-                  <span class="feature-tag">Tiempo Real</span>
-                </div>
-              </a>
+
+              <!-- Opciones para Estudiantes -->
+              <ng-container *ngIf="isStudent() || isTeacher() || isAdmin()">
+                <!-- Simulaciones de Física -->
+                <a routerLink="/fisica" class="navigation-card group">
+                  <div class="card-icon">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <h3 class="card-title">Simulaciones de Física</h3>
+                  <p class="card-description">
+                    Experimenta con caída libre, movimiento parabólico y péndulo simple
+                  </p>
+                  <div class="card-features">
+                    <span class="feature-tag">3D</span>
+                    <span class="feature-tag">Interactivo</span>
+                    <span class="feature-tag">Tiempo Real</span>
+                  </div>
+                </a>
+
+                <!-- Realidad Aumentada -->
+                <a routerLink="/ra" class="navigation-card group">
+                  <div class="card-icon">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <h3 class="card-title">Realidad Aumentada</h3>
+                  <p class="card-description">
+                    Visualiza conceptos físicos con marcadores AR usando tu cámara
+                  </p>
+                  <div class="card-features">
+                    <span class="feature-tag">AR</span>
+                    <span class="feature-tag">Cámara</span>
+                    <span class="feature-tag">Inmersivo</span>
+                  </div>
+                </a>
+
+                <!-- Tutor Virtual -->
+                <a routerLink="/tutor" class="navigation-card group">
+                  <div class="card-icon">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </div>
+                  <h3 class="card-title">Tutor Virtual</h3>
+                  <p class="card-description">
+                    Recibe ayuda personalizada con inteligencia artificial
+                  </p>
+                  <div class="card-features">
+                    <span class="feature-tag">IA</span>
+                    <span class="feature-tag">Chat</span>
+                    <span class="feature-tag">24/7</span>
+                  </div>
+                </a>
+              </ng-container>
+
+              <!-- Opciones adicionales para Profesores -->
+              <ng-container *ngIf="isTeacher() || isAdmin()">
+                <!-- Gestión de Estudiantes -->
+                <a href="#" class="navigation-card group opacity-60">
+                  <div class="card-icon">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                    </svg>
+                  </div>
+                  <h3 class="card-title">Mis Estudiantes</h3>
+                  <p class="card-description">
+                    Gestiona y supervisa el progreso de tus estudiantes
+                  </p>
+                  <div class="card-features">
+                    <span class="feature-tag">Próximamente</span>
+                  </div>
+                </a>
+
+                <!-- Reportes -->
+                <a href="#" class="navigation-card group opacity-60">
+                  <div class="card-icon">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <h3 class="card-title">Reportes</h3>
+                  <p class="card-description">
+                    Genera reportes de desempeño y estadísticas
+                  </p>
+                  <div class="card-features">
+                    <span class="feature-tag">Próximamente</span>
+                  </div>
+                </a>
+              </ng-container>
+
+              <!-- Opciones exclusivas para Administradores -->
+              <ng-container *ngIf="isAdmin()">
+                <!-- Gestión de Usuarios -->
+                <a href="#" class="navigation-card group opacity-60">
+                  <div class="card-icon">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </div>
+                  <h3 class="card-title">Administración</h3>
+                  <p class="card-description">
+                    Gestiona usuarios, roles y configuraciones del sistema
+                  </p>
+                  <div class="card-features">
+                    <span class="feature-tag">Próximamente</span>
+                  </div>
+                </a>
+              </ng-container>
 
               <!-- Modo RA -->
               <a routerLink="/ra" class="navigation-card group">
@@ -88,7 +209,7 @@ import { RouterLink } from '@angular/router';
             </div>
 
             <!-- Stats section responsive -->
-            <div class="mt-12 pt-8 border-t border-white/10">
+            <div class="mt-12 pt-8 border-t border-white-10">
               <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                 <div class="stat-item">
                   <div class="stat-number">3</div>
@@ -276,7 +397,7 @@ import { RouterLink } from '@angular/router';
       border-top-width: 1px;
     }
 
-    .border-white\/10 {
+    .border-white-10 {
       border-color: rgba(255, 255, 255, 0.1);
     }
 
@@ -284,7 +405,7 @@ import { RouterLink } from '@angular/router';
       width: 4rem;
     }
 
-    .h-0\.5 {
+    .h-0-5 {
       height: 0.125rem;
     }
 
@@ -344,4 +465,73 @@ import { RouterLink } from '@angular/router';
     }
   `]
 })
-export class HomeComponent {}
+export class HomeComponent {
+  readonly authService = inject(AuthService);
+  private router = inject(Router);
+
+  // Datos computados basados en el rol del usuario
+  readonly userRole = computed(() => this.authService.userRole());
+  readonly isAdmin = computed(() => this.userRole() === UserRole.ADMIN);
+  readonly isTeacher = computed(() => this.userRole() === UserRole.TEACHER);
+  readonly isStudent = computed(() => this.userRole() === UserRole.STUDENT);
+
+  /**
+   * Obtener título del dashboard según el rol
+   */
+  getDashboardTitle(): string {
+    const role = this.userRole();
+    switch (role) {
+      case UserRole.ADMIN:
+        return 'Panel de Administración';
+      case UserRole.TEACHER:
+        return 'Panel del Profesor';
+      case UserRole.STUDENT:
+        return 'Laboratorio Virtual RA';
+      default:
+        return 'Laboratorio Virtual RA';
+    }
+  }
+
+  /**
+   * Obtener descripción del dashboard según el rol
+   */
+  getDashboardDescription(): string {
+    const role = this.userRole();
+    switch (role) {
+      case UserRole.ADMIN:
+        return 'Gestiona usuarios, contenido y configuraciones del sistema';
+      case UserRole.TEACHER:
+        return 'Administra tus clases, asigna ejercicios y revisa el progreso de tus estudiantes';
+      case UserRole.STUDENT:
+        return 'Selecciona un área para comenzar tu experiencia de aprendizaje';
+      default:
+        return 'Explora las simulaciones disponibles';
+    }
+  }
+
+  /**
+   * Obtener nombre del rol para mostrar
+   */
+  getRoleDisplayName(): string {
+    const role = this.userRole();
+    switch (role) {
+      case UserRole.ADMIN:
+        return 'Administrador';
+      case UserRole.TEACHER:
+        return 'Profesor';
+      case UserRole.STUDENT:
+        return 'Estudiante';
+      case UserRole.GUEST:
+        return 'Invitado';
+      default:
+        return 'Usuario';
+    }
+  }
+
+  /**
+   * Cerrar sesión
+   */
+  logout(): void {
+    this.authService.logout();
+  }
+}

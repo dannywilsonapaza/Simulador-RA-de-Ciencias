@@ -8,8 +8,10 @@
 /* Estilos para el contenedor raíz de la aplicación */
 .app-root {
   width: 100%;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  /* permitir scroll vertical cuando el contenido exceda */
+  overflow-x: hidden;
+  overflow-y: auto;
   font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

@@ -1,40 +1,59 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink, RouterOutlet, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../../features/auth/services/auth.service';
 @Component({
   selector: 'app-shell',
   standalone: true,
   imports: [RouterLink, RouterOutlet, RouterLinkActive],
   template: `
-    <div class="layout">
-      <aside class="side">
-        <h2>🔬 Laboratorio RA</h2>
-        <nav>
-          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
-            🏠 Inicio
-          </a>
-          <a routerLink="/fisica" routerLinkActive="active">
-            ⚛️ Física
-          </a>
-          <a routerLink="/ra" routerLinkActive="active">
-            🥽 RA
-          </a>
-          <a routerLink="/tutor" routerLinkActive="active">
-            🤖 Tutor IA
-          </a>
-        </nav>
-      </aside>
-      <main class="main">
+    @if (authService.isAuthenticated()) {
+      <div class="layout">
+        <aside class="side">
+          <h2>🔬 Laboratorio RA</h2>
+          <nav>
+            <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+              🏠 Inicio
+            </a>
+            <a routerLink="/fisica" routerLinkActive="active">
+              ⚛️ Física
+            </a>
+            <a routerLink="/ra" routerLinkActive="active">
+              🥽 RA
+            </a>
+            <a routerLink="/tutor" routerLinkActive="active">
+              🤖 Tutor IA
+            </a>
+          </nav>
+        </aside>
+        <main class="main">
+          <router-outlet />
+        </main>
+      </div>
+    } @else {
+      <div class="login-layout">
         <router-outlet />
-      </main>
-    </div>
+      </div>
+    }
   `,
   styles:[`
     .layout {
       display: flex;
       min-height: 100vh;
       width: 100%;
-      height: 100vh;
-      overflow: hidden;
+      /* no fijar height para permitir crecimiento */
+      /* height: 100vh; */
+      /* no ocultar overflow a nivel de layout */
+      overflow: visible;
+    }
+
+    .login-layout {
+      display: block;
+      min-height: 100vh;
+      width: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      /* permitir scroll cuando el login tenga contenido largo */
+      overflow-x: hidden;
+      overflow-y: auto;
     }
 
     .side {
@@ -135,4 +154,6 @@ import { RouterLink, RouterOutlet, RouterLinkActive } from '@angular/router';
     }
   `]
 })
-export class AppShellComponent {}
+export class AppShellComponent {
+  authService = inject(AuthService);
+}
