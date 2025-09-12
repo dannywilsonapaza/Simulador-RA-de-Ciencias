@@ -9,19 +9,9 @@
 .app-root {
   width: 100%;
   min-height: 100vh;
-  /* permitir scroll vertical cuando el contenido exceda */
-  overflow-x: hidden;
-  overflow-y: auto;
   font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* Asegurar que el app-shell tome todo el espacio disponible */
-.app-root app-shell {
-  display: block;
-  width: 100%;
-  height: 100%;
 }
 
 /* Estilos globales para mejorar la experiencia visual */

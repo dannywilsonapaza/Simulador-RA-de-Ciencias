@@ -1,37 +1,61 @@
-/* Variables del modelo.html */
-:root {
+/* Replicación exacta del diseño de login con PrimeNG */
+
+/* Variables CSS con los colores exactos del modelo */
+:host {
   --primary: #2c3e50;
   --secondary: #e74c3c;
   --accent: #3498db;
+  --light: #ecf0f1;
   --dark: #2c3e50;
-}
+  --success: #2ecc71;
+  --warning: #f39c12;
+  --info: #17a2b8;
 
-/* Host y fondo */
-:host {
   display: block;
-  background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
-  color: #333;
-  line-height: 1.6;
+  width: 100%;
   min-height: 100vh;
 }
 
-/* Layout básico */
+.login-page {
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+  padding: 20px;
+  box-sizing: border-box;
+  color: white;
+  font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+}
+
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 0 20px;
 }
 
-header {
+.login-header {
   text-align: center;
-  padding: 30px 0;
-  color: white;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  padding: 40px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 40px;
 }
 
-h1 {
-  font-size: 2.8rem;
+.login-header h1 {
+  font-size: 3rem;
+  font-weight: 700;
   margin-bottom: 10px;
+  color: white;
+}
+
+
+.login-header p {
+  color: var(--text-light);
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+
+.login-header h1 i {
+  margin-right: 15px;
 }
 
 .subtitle {
@@ -41,6 +65,7 @@ h1 {
   margin: 0 auto;
 }
 
+/* Main content */
 .content {
   display: flex;
   flex-wrap: wrap;
@@ -48,6 +73,7 @@ h1 {
   margin: 40px 0;
 }
 
+/* Login Demo */
 .login-demo {
   flex: 1;
   min-width: 300px;
@@ -74,6 +100,7 @@ h1 {
   max-width: 400px;
 }
 
+/* Form groups */
 .form-group {
   margin-bottom: 20px;
 }
@@ -85,6 +112,65 @@ h1 {
   color: var(--dark);
 }
 
+/* Asegurar que todos los inputs tengan texto negro */
+::ng-deep .login-form input,
+::ng-deep .login-form .p-inputtext,
+::ng-deep .login-form .p-password-input {
+  color: #333 !important;
+}
+
+/* Sobrescribir estilos de PrimeNG */
+::ng-deep .login-form .p-inputtext {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+  background: #fff;
+  color: #333 !important;
+}
+
+::ng-deep .login-form .p-inputtext:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+::ng-deep .login-form .p-password {
+  width: 100%;
+}
+
+::ng-deep .login-form .p-password .p-password-input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+  color: #333 !important;
+}
+
+::ng-deep .login-form .p-password .p-password-input:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+::ng-deep .login-form .p-iconfield {
+  width: 100%;
+}
+
+::ng-deep .login-form .p-iconfield .p-inputtext {
+  padding-left: 45px;
+}
+
+::ng-deep .login-form .p-iconfield .p-inputicon {
+  color: #777;
+  left: 15px;
+}
+
+/* Login options */
 .login-options {
   display: flex;
   justify-content: space-between;
@@ -92,11 +178,43 @@ h1 {
   font-size: 0.9rem;
 }
 
+.remember-me {
+  display: flex;
+  align-items: center;
+}
+
+::ng-deep .remember-me .p-checkbox {
+  margin-right: 8px;
+}
+
 .forgot-password {
   color: var(--accent);
   text-decoration: none;
 }
 
+.forgot-password:hover {
+  text-decoration: underline;
+}
+
+/* Login button */
+::ng-deep .btn-login {
+  width: 100%;
+  padding: 14px !important;
+  background: var(--accent) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: background 0.3s !important;
+}
+
+::ng-deep .btn-login:hover:not(:disabled) {
+  background: #2980b9 !important;
+}
+
+/* Social login */
 .social-login {
   margin: 25px 0;
   text-align: center;
@@ -127,50 +245,253 @@ h1 {
   gap: 15px;
 }
 
-.register-section {
+::ng-deep .btn-social {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 50% !important;
+  background: #f5f5f5 !important;
+  border: 1px solid #ddd !important;
+  cursor: pointer !important;
+  transition: background 0.3s, transform 0.3s !important;
+  color: #333 !important;
+}
+
+::ng-deep .btn-social:hover {
+  background: #e9e9e9 !important;
+  transform: translateY(-3px) !important;
+}
+
+::ng-deep .btn-social.google-btn i {
+  color: #DB4437 !important;
+}
+
+::ng-deep .btn-social.microsoft-btn i {
+  color: #0078D7 !important;
+}
+
+::ng-deep .btn-social.apple-btn i {
+  color: #000 !important;
+}
+
+/* Register link */
+.register-link {
   text-align: center;
   margin-top: 20px;
 }
 
-.register-section a {
+.register-link a {
   color: var(--accent);
+  text-decoration: none;
 }
 
-footer {
+.register-link a:hover {
+  text-decoration: underline;
+}
+
+/* Error messages */
+::ng-deep .p-error {
+  color: #e74c3c;
+  font-size: 0.875rem;
+  margin-top: 5px;
+  display: block;
+}
+
+::ng-deep .p-invalid {
+  border-color: #e74c3c !important;
+}
+
+/* Security Info */
+.security-info {
+  flex: 1;
+  min-width: 300px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.security-info h2 {
+  color: var(--primary);
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--accent);
+}
+
+.security-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.security-icon {
+  background: var(--info);
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15px;
+  flex-shrink: 0;
+}
+
+.security-item h3 {
+  color: var(--primary);
+  margin-bottom: 5px;
+}
+
+.security-item p {
+  color: #666;
+  line-height: 1.5;
+}
+
+/* Considerations */
+.considerations {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  padding: 25px;
+  margin: 30px 0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.considerations h2 {
+  color: var(--primary);
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--accent);
+}
+
+.consideration-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.consideration-item {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+  border-left: 4px solid var(--success);
+}
+
+.consideration-item h3 {
+  color: var(--primary);
+  margin-bottom: 10px;
+}
+
+.consideration-item p {
+  color: #666;
+  line-height: 1.5;
+}
+
+/* User Types */
+.user-types {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  padding: 25px;
+  margin: 30px 0;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.user-types h2 {
+  color: var(--primary);
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--accent);
+}
+
+.user-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.user-card {
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s;
+}
+
+.user-card:hover {
+  transform: translateY(-5px);
+}
+
+.user-icon {
+  font-size: 2.5rem;
+  color: var(--accent);
+  margin-bottom: 15px;
+}
+
+.user-card h3 {
+  color: var(--primary);
+  margin-bottom: 10px;
+}
+
+.user-card p {
+  color: #666;
+  line-height: 1.5;
+}
+
+/* Footer */
+.login-footer {
   text-align: center;
   padding: 30px 0;
   color: white;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-/* Error messages */
-.error-text {
-  color: var(--secondary);
-  font-size: 0.8rem;
-  margin-top: 4px;
+.login-footer p {
+  margin-bottom: 5px;
 }
 
-.error-message {
-  background: rgba(231, 76, 60, 0.1);
-  border: 1px solid rgba(231, 76, 60, 0.3);
-  color: var(--secondary);
-  padding: 0.75rem;
-  border-radius: 6px;
-  margin: 0.5rem 0;
-}
-
-/* Responsive */
+/* Responsive design */
 @media (max-width: 768px) {
   .content {
     flex-direction: column;
   }
 
-  h1 {
+  .login-header h1 {
     font-size: 2.2rem;
   }
 
   .login-options {
     flex-direction: column;
     gap: 10px;
+  }
+
+  .consideration-list {
+    grid-template-columns: 1fr;
+  }
+
+  .user-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 10px;
+  }
+
+  .login-demo,
+  .security-info,
+  .considerations,
+  .user-types {
+    padding: 20px;
+  }
+
+  .login-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
   }
 }

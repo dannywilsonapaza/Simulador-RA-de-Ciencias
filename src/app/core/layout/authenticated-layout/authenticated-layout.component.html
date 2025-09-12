@@ -1,0 +1,34 @@
+<div class="authenticated-layout">
+  <aside class="sidebar">
+    <h2>🔬 Laboratorio RA</h2>
+    <nav>
+      <a routerLink="/dashboard" routerLinkActive="active">
+        🏠 Dashboard
+      </a>
+      <a routerLink="/fisica" routerLinkActive="active">
+        ⚛️ Física
+      </a>
+      <a routerLink="/ra" routerLinkActive="active">
+        🥽 RA
+      </a>
+      <a routerLink="/tutor" routerLinkActive="active">
+        🤖 Tutor IA
+      </a>
+    </nav>
+
+    <!-- Botón de logout en el sidebar -->
+    <div class="sidebar-footer">
+      <button (click)="logout()" class="logout-btn">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        Cerrar Sesión
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <router-outlet />
+  </main>
+</div>

@@ -1,130 +1,257 @@
-<div class="container">
-  <header>
-    <h1><i class="pi pi-lock"></i> Sistema de Login Seguro</h1>
-    <p class="subtitle">Consideraciones para implementar autenticación en plataforma educativa con RA</p>
-  </header>
+<div class="login-page">
+  <div class="container">
+    <!-- Header -->
+    <header class="login-header">
+      <h1><i class="fas fa-user-shield"></i> Sistema de Login Seguro</h1>
+      <p class="subtitle">Consideraciones para implementar autenticación en plataforma educativa con RA</p>
+    </header>
 
-  <div class="content">
-    <div class="login-demo">
-      <h2>Demo de Login</h2>
-      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form" novalidate>
 
-        <!-- Campo de Email -->
-        <div class="form-group">
-          <label for="email">Correo electrónico</label>
-          <p-iconfield iconPosition="left">
-            <p-inputicon styleClass="pi pi-envelope"></p-inputicon>
-            <input
-              pInputText
-              type="email"
-              id="email"
-              formControlName="email"
-              placeholder="usuario@ejemplo.com"
-              autocomplete="email"
-              [class.ng-invalid]="isFieldInvalid('email')"
-              [class.ng-dirty]="loginForm.get('email')?.dirty"
-              required
-            />
-          </p-iconfield>
-          <small
-            class="error-text"
-            *ngIf="isFieldInvalid('email')"
-            [@fadeInOut]
-          >
-            <i class="pi pi-exclamation-circle"></i>
-            {{ getFieldError('email') }}
-          </small>
-        </div>
-
-        <!-- Campo de Contraseña -->
-        <div class="form-group">
-          <label for="password">Contraseña</label>
-          <p-password
-            id="password"
-            formControlName="password"
-            placeholder="Ingresa tu contraseña"
-            [toggleMask]="true"
-            [feedback]="false"
-            styleClass="w-full"
-            inputStyleClass="w-full"
-          ></p-password>
-          <small class="error-text" *ngIf="isFieldInvalid('password')">
-            <i class="pi pi-exclamation-circle"></i> {{ getFieldError('password') }}
-          </small>
-        </div>
-
-        <!-- Opciones de Login -->
-        <div class="login-options">
-          <div class="remember-me">
-            <p-checkbox
-              formControlName="rememberMe"
-              inputId="remember"
-              label="Recordarme"
-            ></p-checkbox>
+    <!-- Main content -->
+    <div class="content">
+      <!-- Login Demo -->
+      <div class="login-demo">
+        <h2>Demo de Login</h2>
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+          <!-- Email field -->
+          <div class="form-group">
+            <label for="email">Correo electrónico</label>
+              <p-inputIcon styleClass="pi pi-envelope"></p-inputIcon>
+              <input
+                pInputText
+                id="email"
+                type="email"
+                formControlName="email"
+                placeholder="usuario@ejemplo.com"
+                [class.p-invalid]="submitted && email?.invalid"
+                class="w-full" />
+            <small *ngIf="submitted && email?.invalid && email?.errors?.['required']" class="p-error">
+              El correo electrónico es requerido
+            </small>
+            <small *ngIf="submitted && email?.invalid && email?.errors?.['email']" class="p-error">
+              Ingresa un correo electrónico válido
+            </small>
           </div>
-          <a href="#" class="forgot-password" (click)="$event.preventDefault(); forgotPassword()">
-            ¿Olvidaste tu contraseña?
-          </a>
-        </div>
 
-        <!-- Botón Principal -->
-        <p-button
-          type="submit"
-          label="Iniciar Sesión"
-          styleClass="btn-login w-full"
-          [disabled]="authService.isLoading() || loginForm.invalid"
-          [loading]="authService.isLoading()"
-        ></p-button>
-
-        <!-- Mensaje de Error -->
-        <div class="error-message" *ngIf="loginError()">
-          <i class="pi pi-exclamation-triangle"></i>
-          {{ loginError() }}
-        </div>
-
-        <!-- Social Login -->
-        <div class="social-login">
-          <div class="social-divider">
-            <span>O inicia sesión con</span>
+          <!-- Password field -->
+          <div class="form-group">
+            <label for="password">Contraseña</label>
+            <p-password
+              id="password"
+              formControlName="password"
+              placeholder="Ingresa tu contraseña"
+              [toggleMask]="true"
+              [feedback]="false"
+              [class.p-invalid]="submitted && password?.invalid"
+              styleClass="w-full"
+              inputStyleClass="w-full">
+            </p-password>
+            <small *ngIf="submitted && password?.invalid && password?.errors?.['required']" class="p-error">
+              La contraseña es requerida
+            </small>
+            <small *ngIf="submitted && password?.invalid && password?.errors?.['minlength']" class="p-error">
+              La contraseña debe tener al menos 6 caracteres
+            </small>
           </div>
-          <div class="social-buttons">
-            <p-button
-              type="button"
-              styleClass="btn-social google"
-              (onClick)="socialLogin('google')"
-              [text]="true"
-              [rounded]="true"
-            >
-              <i class="pi pi-google"></i>
-            </p-button>
-            <p-button
-              type="button"
-              styleClass="btn-social microsoft"
-              (onClick)="socialLogin('microsoft')"
-              [text]="true"
-              [rounded]="true"
-            >
-              <i class="pi pi-microsoft"></i>
-            </p-button>
-            <p-button
-              type="button"
-              styleClass="btn-social apple"
-              (onClick)="socialLogin('apple')"
-              [text]="true"
-              [rounded]="true"
-            >
-              <i class="pi pi-apple"></i>
-            </p-button>
+
+          <!-- Login options -->
+          <div class="login-options">
+            <div class="remember-me">
+              <p-checkbox
+                formControlName="rememberMe"
+                inputId="remember"
+                label="Recordarme">
+              </p-checkbox>
+            </div>
+
+            <a href="#" class="forgot-password" (click)="onForgotPassword(); $event.preventDefault()">
+              ¿Olvidaste tu contraseña?
+            </a>
+          </div>
+
+          <!-- Login button -->
+          <p-button
+            type="submit"
+            label="Iniciar Sesión"
+            styleClass="btn-login w-full"
+            [loading]="false">
+          </p-button>
+
+          <!-- Social login -->
+          <div class="social-login">
+            <div class="social-divider">
+              <span>O inicia sesión con</span>
+            </div>
+
+            <div class="social-buttons">
+              <p-button
+                (onClick)="onSocialLogin('google')"
+                styleClass="btn-social google-btn"
+                [text]="true">
+                <i class="fab fa-google"></i>
+              </p-button>
+
+              <p-button
+                (onClick)="onSocialLogin('microsoft')"
+                styleClass="btn-social microsoft-btn"
+                [text]="true">
+                <i class="fab fa-microsoft"></i>
+              </p-button>
+
+              <p-button
+                (onClick)="onSocialLogin('apple')"
+                styleClass="btn-social apple-btn"
+                [text]="true">
+                <i class="fab fa-apple"></i>
+              </p-button>
+            </div>
+          </div>
+
+          <!-- Register link -->
+          <div class="register-link">
+            <p>¿No tienes cuenta?
+              <a href="#" (click)="onRegister(); $event.preventDefault()">Regístrate aquí</a>
+            </p>
+          </div>
+        </form>
+      </div>
+
+      <!-- Security Info -->
+      <div class="security-info">
+        <h2>Consideraciones de Seguridad</h2>
+
+        <div class="security-item">
+          <div class="security-icon">
+            <i class="fas fa-lock"></i>
+          </div>
+          <div>
+            <h3>Contraseñas seguras</h3>
+            <p>Exigir contraseñas complejas y utilizar hash seguro (bcrypt) con salt para almacenamiento.</p>
           </div>
         </div>
 
-        <!-- Registro -->
-        <div class="register-section">
-          <p>¿No tienes cuenta? <a href="#" (click)="$event.preventDefault(); goToRegister()">Regístrate aquí</a></p>
+        <div class="security-item">
+          <div class="security-icon">
+            <i class="fas fa-shield-alt"></i>
+          </div>
+          <div>
+            <h3>Autenticación de dos factores (2FA)</h3>
+            <p>Implementar 2FA para acceso adicional seguro, especialmente para administradores.</p>
+          </div>
         </div>
 
-      </form>
+        <div class="security-item">
+          <div class="security-icon">
+            <i class="fas fa-exchange-alt"></i>
+          </div>
+          <div>
+            <h3>Tokens JWT</h3>
+            <p>Utilizar JSON Web Tokens para manejo de sesiones con expiración configurable.</p>
+          </div>
+        </div>
+
+        <div class="security-item">
+          <div class="security-icon">
+            <i class="fas fa-ban"></i>
+          </div>
+          <div>
+            <h3>Protección contra ataques</h3>
+            <p>Implementar rate limiting, protección contra CSRF y sanitización de inputs.</p>
+          </div>
+        </div>
+
+        <div class="security-item">
+          <div class="security-icon">
+            <i class="fas fa-user-lock"></i>
+          </div>
+          <div>
+            <h3>Roles y permisos</h3>
+            <p>Sistema de autorización basado en roles para controlar acceso a funcionalidades.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Considerations -->
+    <div class="considerations">
+      <h2>Consideraciones Técnicas</h2>
+
+      <div class="consideration-list">
+        <div class="consideration-item">
+          <h3>Almacenamiento seguro</h3>
+          <p>Nunca almacenar contraseñas en texto plano. Usar hash con salt y algoritmos seguros.</p>
+        </div>
+
+        <div class="consideration-item">
+          <h3>HTTPS obligatorio</h3>
+          <p>Todas las comunicaciones deben realizarse sobre HTTPS para proteger datos sensibles.</p>
+        </div>
+
+        <div class="consideration-item">
+          <h3>Validación de entrada</h3>
+          <p>Validar y sanitizar todos los datos recibidos del cliente para prevenir inyecciones.</p>
+        </div>
+
+        <div class="consideration-item">
+          <h3>Cookies seguras</h3>
+          <p>Configurar cookies con flags HttpOnly, Secure y SameSite para mayor seguridad.</p>
+        </div>
+
+        <div class="consideration-item">
+          <h3>Logs de auditoría</h3>
+          <p>Mantener registros de intentos de login exitosos y fallidos para monitorización.</p>
+        </div>
+
+        <div class="consideration-item">
+          <h3>Recuperación de cuenta</h3>
+          <p>Implementar flujo seguro para recuperación de contraseña con tokens temporales.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Types -->
+    <div class="user-types">
+      <h2>Tipos de Usuarios y Permisos</h2>
+
+      <div class="user-grid">
+        <div class="user-card">
+          <div class="user-icon">
+            <i class="fas fa-user-graduate"></i>
+          </div>
+          <h3>Estudiante</h3>
+          <p>Acceso a simulaciones, ejercicios prácticos y visualización de su propio progreso.</p>
+        </div>
+
+        <div class="user-card">
+          <div class="user-icon">
+            <i class="fas fa-chalkboard-teacher"></i>
+          </div>
+          <h3>Profesor</h3>
+          <p>Gestión de clases, asignación de ejercicios, visualización de progreso de estudiantes.</p>
+        </div>
+
+        <div class="user-card">
+          <div class="user-icon">
+            <i class="fas fa-user-tie"></i>
+          </div>
+          <h3>Administrador</h3>
+          <p>Gestión completa de usuarios, contenido, y configuración del sistema.</p>
+        </div>
+
+        <div class="user-card">
+          <div class="user-icon">
+            <i class="fas fa-laptop-code"></i>
+          </div>
+          <h3>Invitado</h3>
+          <p>Acceso limitado a demostraciones sin necesidad de crear cuenta.</p>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
+  <!-- Footer -->
+  <footer class="login-footer">
+    <p>Sistema de Realidad Aumentada para Educación en Física - Perú © 2025</p>
+    <p>Implementación segura de autenticación y autorización</p>
+  </footer>
+</div>
