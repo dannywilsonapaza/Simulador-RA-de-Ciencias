@@ -1,91 +1,153 @@
-<div class="container">
-  <header>
-    <h1>Simulador de Tiro Parabólico</h1>
-    <p class="subtitle">Ajusta parámetros y observa la trayectoria del proyectil en 3D</p>
+<div class="physics-simulator">
+  <!-- Header -->
+  <header class="simulator-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <i class="pi pi-chart-line"></i>
+      </div>
+      <div>
+        <h1>Física 3D Interactiva - Tiro Parabólico</h1>
+        <p class="subtitle">Ajusta parámetros y observa la trayectoria en tiempo real</p>
+      </div>
+    </div>
   </header>
 
-  <div class="content">
-    <div class="simulator-container">
-      <h2>Configuración</h2>
-      <div class="controls">
+  <!-- Main Content -->
+  <div class="simulator-content">
+    <!-- Control Panel -->
+    <div class="control-panel">
+      <h2 class="panel-title">
+        <i class="pi pi-sliders-h"></i>
+        Controles
+      </h2>
+
+      <div class="controls-grid">
+        <!-- Velocidad Inicial -->
         <div class="control-group">
-          <label for="velocidadSlider">Velocidad inicial (m/s)</label>
+          <label for="velocitySlider">Velocidad Inicial: {{ velocity }} m/s</label>
           <input
-            id="velocidadSlider"
+            id="velocitySlider"
             type="range"
-            min="5"
+            min="0"
             max="50"
-            [ngModel]="initialVelocity"
-            (ngModelChange)="initialVelocity=$event; onParamChange()"
+            [(ngModel)]="velocity"
+            (ngModelChange)="onParamChange()"
+            [disabled]="isPlaying"
+            class="slider"
           />
-          <div class="value-display">{{ initialVelocity }} m/s</div>
         </div>
 
+        <!-- Ángulo -->
         <div class="control-group">
-          <label for="anguloSlider">Ángulo de lanzamiento (°)</label>
+          <label for="angleSlider">Ángulo: {{ angle }}°</label>
           <input
-            id="anguloSlider"
+            id="angleSlider"
             type="range"
-            min="10"
-            max="80"
-            [ngModel]="angle"
-            (ngModelChange)="angle=$event; onParamChange()"
+            min="0"
+            max="90"
+            [(ngModel)]="angle"
+            (ngModelChange)="onParamChange()"
+            [disabled]="isPlaying"
+            class="slider"
           />
-          <div class="value-display">{{ angle }}°</div>
         </div>
 
+        <!-- Gravedad -->
         <div class="control-group">
-          <label for="gravedadSlider">Gravedad (m/s²)</label>
+          <label for="gravitySlider">Gravedad: {{ gravity | number:'1.1-1' }} m/s²</label>
           <input
-            id="gravedadSlider"
-            type="range"
-            min="1"
-            max="20"
-            step="0.1"
-            [ngModel]="gravity"
-            (ngModelChange)="gravity=$event; onParamChange()"
-          />
-          <div class="value-display">{{ gravity | number:'1.1-1' }} m/s²</div>
-        </div>
-
-        <div class="control-group">
-          <label for="masaSlider">Masa (kg)</label>
-          <input
-            id="masaSlider"
-            type="range"
-            min="1"
-            max="20"
-            [ngModel]="mass"
-            (ngModelChange)="mass=$event; onParamChange()"
-          />
-          <div class="value-display">{{ mass }} kg</div>
-        </div>
-
-        <div class="control-group">
-          <label for="alturaSlider">Altura inicial (m)</label>
-          <input
-            id="alturaSlider"
+            id="gravitySlider"
             type="range"
             min="0"
             max="20"
-            [ngModel]="height"
-            (ngModelChange)="height=$event; onParamChange()"
+            step="0.1"
+            [(ngModel)]="gravity"
+            (ngModelChange)="onParamChange()"
+            [disabled]="isPlaying"
+            class="slider"
           />
-          <div class="value-display">{{ height }} m</div>
+        </div>
+
+        <!-- Altura Inicial -->
+        <div class="control-group">
+          <label for="heightSlider">Altura Inicial: {{ height }} m</label>
+          <input
+            id="heightSlider"
+            type="range"
+            min="0"
+            max="20"
+            [(ngModel)]="height"
+            (ngModelChange)="onParamChange()"
+            [disabled]="isPlaying"
+            class="slider"
+          />
         </div>
       </div>
 
-      <div class="buttons">
-        <button (click)="startSimulation()" [disabled]="isSimulating">
-          Iniciar Simulación
+      <!-- Botones de Control -->
+      <div class="control-buttons">
+        <button
+          (click)="isPlaying ? '' : startSimulation()"
+          [disabled]="isPlaying"
+          class="btn-primary">
+          <i [class]="isPlaying ? 'pi pi-pause' : 'pi pi-play'"></i>
+          {{ isPlaying ? 'Simulando...' : 'Iniciar' }}
         </button>
-        <button class="secondary" (click)="resetSimulation()">
+        <button
+          (click)="resetSimulation()"
+          class="btn-secondary">
+          <i class="pi pi-refresh"></i>
           Reiniciar
         </button>
       </div>
 
-      <div class="results">
-        <h3>Resultados Calculados</h3>
+      <!-- Mediciones en Tiempo Real -->
+      <div class="measurements-panel">
+        <h3 class="measurements-title">
+          <i class="pi pi-chart-bar"></i>
+          Mediciones en Tiempo Real
+        </h3>
+        <div class="measurement-grid">
+          <div class="measurement-item">
+            <span class="measurement-label">Tiempo:</span>
+            <span class="measurement-value">{{ time | number:'1.2-2' }} s</span>
+          </div>
+          <div class="measurement-item">
+            <span class="measurement-label">Posición X:</span>
+            <span class="measurement-value">{{ position.x | number:'1.2-2' }} m</span>
+          </div>
+          <div class="measurement-item">
+            <span class="measurement-label">Posición Y:</span>
+            <span class="measurement-value">{{ position.y | number:'1.2-2' }} m</span>
+          </div>
+          <div class="measurement-item">
+            <span class="measurement-label">Velocidad X:</span>
+            <span class="measurement-value">{{ currentVelocity.x | number:'1.2-2' }} m/s</span>
+          </div>
+          <div class="measurement-item">
+            <span class="measurement-label">Velocidad Y:</span>
+            <span class="measurement-value">{{ currentVelocity.y | number:'1.2-2' }} m/s</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fórmulas -->
+      <div class="formulas-panel">
+        <h3 class="formulas-title">
+          <i class="pi pi-calculator"></i>
+          Fórmulas MRUV
+        </h3>
+        <div class="formulas-content">
+          <p>x = v₀ · cos(θ) · t</p>
+          <p>y = h₀ + v₀ · sin(θ) · t - ½gt²</p>
+          <p>vₓ = v₀ · cos(θ)</p>
+          <p>vᵧ = v₀ · sin(θ) - gt</p>
+        </div>
+      </div>
+
+      <!-- Resultados Calculados -->
+      <div class="results-panel">
+        <h3 class="results-title">Resultados Calculados</h3>
         <div class="result-item">
           <span>Tiempo de vuelo:</span>
           <span>{{ flightTime | number:'1.2-2' }} s</span>
@@ -98,25 +160,30 @@
           <span>Alcance horizontal:</span>
           <span>{{ range | number:'1.2-2' }} m</span>
         </div>
-        <div class="result-item">
-          <span>Velocidad inicial:</span>
-          <span>{{ maxVelocity | number:'1.2-2' }} m/s</span>
-        </div>
-        <div class="result-item">
-          <span>Energía cinética:</span>
-          <span>{{ kineticEnergy | number:'1.2-2' }} J</span>
-        </div>
       </div>
     </div>
 
-    <div class="visualization">
-      <canvas #simulationCanvas></canvas>
+    <!-- 3D Visualization -->
+    <div class="visualization-container">
+      <div class="canvas-wrapper">
+        <canvas #simulationCanvas></canvas>
+      </div>
     </div>
   </div>
 
-  <div class="ar-info">
-    <h2>Modo RA (beta)</h2>
-    <p>Próximamente se integrará visualización en entorno real para tiro parabólico.</p>
-    <button (click)="activateAR()">Activar RA</button>
-  </div>
+  <!-- Chat Button (Floating) -->
+  <button
+    (click)="toggleChat()"
+    class="chat-fab"
+    aria-label="Abrir chat con tutor IA">
+    <i class="pi pi-comments"></i>
+    <span>Pregunta a la IA</span>
+  </button>
+
+  <!-- Chat Modal -->
+  <app-chat-modal
+    [isVisible]="showChat"
+    [simulationContext]="simulationContext"
+    (close)="closeChat()">
+  </app-chat-modal>
 </div>

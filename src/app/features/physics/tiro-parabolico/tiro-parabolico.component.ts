@@ -9,28 +9,46 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import * as THREE from 'three';
 import { TelemetryService } from '../../../core/services/telemetry.service';
+import { ChatModalComponent } from '../../tutor/components/chat-modal/chat-modal.component';
+import { SimulationContext } from '../../tutor/services/ai-tutor.service';
 
 @Component({
   selector: 'app-tiro-parabolico',
   standalone: true,
-  imports: [CommonModule, FormsModule, DecimalPipe],
+  imports: [CommonModule, FormsModule, DecimalPipe, ChatModalComponent],
   templateUrl: './tiro-parabolico.component.html',
   styleUrls: ['./tiro-parabolico.component.css'],
 })
 export class TiroParabolicoComponent implements AfterViewInit, OnDestroy {
   // Parámetros de la simulación
-  initialVelocity = 20; // m/s
+  velocity = 20; // m/s
   angle = 45; // grados
   gravity = 9.8; // m/s²
-  mass = 5; // kg
   height = 0; // altura inicial en metros
 
-  // Resultados calculados
+  // Estado de la simulación
+  isPlaying = false;
+  time = 0;
+  position = { x: 0, y: 0 };
+  currentVelocity = { x: 0, y: 0 };
+
+  // Mediciones en tiempo real
   flightTime = 0;
   maxHeight = 0;
   range = 0;
-  maxVelocity = 0;
-  kineticEnergy = 0;
+
+  // Chat con IA
+  showChat = false;
+  simulationContext: SimulationContext = {
+    topic: 'Tiro Parabólico (Movimiento Parabólico)',
+    velocity: this.velocity,
+    angle: this.angle,
+    gravity: this.gravity,
+    height: this.height,
+    time: this.time,
+    position: this.position,
+    currentVelocity: this.currentVelocity
+  };
 
   @ViewChild('simulationCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
 
@@ -38,27 +56,27 @@ export class TiroParabolicoComponent implements AfterViewInit, OnDestroy {
   private scene!: THREE.Scene;
   private camera!: THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
-  private projectile!: THREE.Mesh;
-  private trajectory!: THREE.Line;
+  private ball!: THREE.Mesh;
+  private trajectoryLine!: THREE.Line;
   private animationId?: number;
 
   // Simulación
-  isSimulating = false;
-  private startTime = 0;
   private trajectoryPoints: THREE.Vector3[] = [];
 
   // Escalado dinámico
   private scale = 1;
-  private maxViewDistance = 50; // Distancia máxima visible en la escena
+  private maxViewDistance = 50;
   private floor!: THREE.Mesh;
   private axesHelper!: THREE.AxesHelper;
   private gridHelper!: THREE.GridHelper;
+
+  // Interval para actualización de física
+  private physicsInterval?: number;
 
   constructor(private telemetry: TelemetryService) {}
 
   ngAfterViewInit() {
     this.telemetry.startSession('tiro-parabolico');
-    // Pequeño retraso para asegurar que el canvas esté completamente renderizado
     setTimeout(() => {
       this.initThree();
       this.calculateTrajectory();
@@ -68,6 +86,7 @@ export class TiroParabolicoComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy() {
     if (this.animationId) cancelAnimationFrame(this.animationId);
+    if (this.physicsInterval) clearInterval(this.physicsInterval);
     this.renderer?.dispose();
     this.telemetry.endSession();
   }
@@ -83,21 +102,18 @@ export class TiroParabolicoComponent implements AfterViewInit, OnDestroy {
 
     const rect = container.getBoundingClientRect();
     const width = rect.width || 800;
-    const height = rect.height || 500;
+    const height = rect.height || 600;
 
+    // Scene
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x87CEEB); // Sky blue
 
-    this.camera = new THREE.PerspectiveCamera(
-      75,
-      width / height,
-      0.1,
-      1000
-    );
-    // La posición inicial se ajustará dinámicamente en calculateTrajectory()
-    this.camera.position.set(20, 15, 30);
+    // Camera
+    this.camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+    this.camera.position.set(30, 20, 40);
     this.camera.lookAt(0, 0, 0);
 
+    // Renderer
     this.renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: true,
@@ -106,52 +122,52 @@ export class TiroParabolicoComponent implements AfterViewInit, OnDestroy {
     this.renderer.setSize(width, height);
     this.renderer.setPixelRatio(window.devicePixelRatio);
 
-    // Iluminación
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-    dirLight.position.set(10, 20, 10);
-    dirLight.castShadow = true;
-    this.scene.add(dirLight);
-
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     this.scene.add(ambientLight);
 
-    // Suelo (terreno) - inicialmente grande
-    this.floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(100, 100),
-      new THREE.MeshStandardMaterial({
-        color: 0x228B22,
-        metalness: 0.1,
-        roughness: 0.8,
-      })
-    );
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(10, 20, 10);
+    this.scene.add(directionalLight);
+
+    // Ground
+    const groundGeometry = new THREE.PlaneGeometry(100, 100);
+    const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x4a9d4a });
+    this.floor = new THREE.Mesh(groundGeometry, groundMaterial);
     this.floor.rotation.x = -Math.PI / 2;
-    this.floor.receiveShadow = true;
     this.scene.add(this.floor);
 
-    // Proyectil (esfera)
-    this.projectile = new THREE.Mesh(
-      new THREE.SphereGeometry(0.5, 16, 16),
-      new THREE.MeshStandardMaterial({
-        color: 0xff4444,
-        metalness: 0.3,
-        roughness: 0.4,
-      })
-    );
-    this.projectile.castShadow = true;
-    this.scene.add(this.projectile);
-
-    // Helpers
-    this.axesHelper = new THREE.AxesHelper(10);
-    this.scene.add(this.axesHelper);
-    this.gridHelper = new THREE.GridHelper(100, 50, 0x444444, 0x222222);
+    // Grid
+    this.gridHelper = new THREE.GridHelper(100, 20, 0x444444, 0x888888);
     this.scene.add(this.gridHelper);
+
+    // Axes
+    this.axesHelper = new THREE.AxesHelper(15);
+    this.scene.add(this.axesHelper);
+
+    // Ball
+    const ballGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+    const ballMaterial = new THREE.MeshStandardMaterial({ color: 0xff4444 });
+    this.ball = new THREE.Mesh(ballGeometry, ballMaterial);
+    this.ball.position.set(0, 0.5, 0);
+    this.scene.add(this.ball);
+
+    // Trajectory line
+    const trajectoryMaterial = new THREE.LineBasicMaterial({
+      color: 0xffff00,
+      linewidth: 2
+    });
+    const trajectoryGeometry = new THREE.BufferGeometry();
+    this.trajectoryLine = new THREE.Line(trajectoryGeometry, trajectoryMaterial);
+    this.scene.add(this.trajectoryLine);
 
     // Event listeners
     window.addEventListener('resize', this.onResize);
 
-    // Renderizado inicial
+    // Start animation loop
+    this.animate();
+
     console.log('Three.js inicializado para tiro parabólico');
-    this.renderFrame();
   }
 
   private onResize = () => {
@@ -163,14 +179,13 @@ export class TiroParabolicoComponent implements AfterViewInit, OnDestroy {
       this.renderer.setSize(rect.width, rect.height);
       this.camera.aspect = rect.width / rect.height;
       this.camera.updateProjectionMatrix();
-      this.renderFrame();
     }
   };
 
   private calculateTrajectory() {
     const angleRad = (this.angle * Math.PI) / 180;
-    const vx = this.initialVelocity * Math.cos(angleRad);
-    const vy = this.initialVelocity * Math.sin(angleRad);
+    const vx = this.velocity * Math.cos(angleRad);
+    const vy = this.velocity * Math.sin(angleRad);
 
     // Calcular tiempo de vuelo
     this.flightTime = (2 * vy + Math.sqrt(4 * vy * vy + 8 * this.gravity * this.height)) / (2 * this.gravity);
@@ -181,25 +196,17 @@ export class TiroParabolicoComponent implements AfterViewInit, OnDestroy {
     // Calcular alcance
     this.range = vx * this.flightTime;
 
-    // Calcular escala dinámica basada en el alcance y altura máxima
+    // Calcular escala dinámica
     const maxDimension = Math.max(this.range, this.maxHeight * 2);
-    // Ajustar escala para mantener la simulación visible pero no demasiado pequeña
     if (maxDimension > this.maxViewDistance) {
       this.scale = this.maxViewDistance / maxDimension;
     } else if (maxDimension < this.maxViewDistance * 0.3) {
-      // Si es muy pequeño, escalar hacia arriba para mejor visualización
       this.scale = Math.min(3, (this.maxViewDistance * 0.5) / maxDimension);
     } else {
       this.scale = 1;
     }
 
-    // Velocidad máxima (al inicio)
-    this.maxVelocity = this.initialVelocity;
-
-    // Energía cinética inicial
-    this.kineticEnergy = 0.5 * this.mass * this.initialVelocity * this.initialVelocity;
-
-    // Generar puntos de la trayectoria escalada
+    // Generar puntos de la trayectoria
     this.trajectoryPoints = [];
     const steps = 100;
     for (let i = 0; i <= steps; i++) {
@@ -208,114 +215,142 @@ export class TiroParabolicoComponent implements AfterViewInit, OnDestroy {
       const y = (this.height + vy * t - 0.5 * this.gravity * t * t) * this.scale;
 
       if (y >= 0) {
-        this.trajectoryPoints.push(new THREE.Vector3(x, y, 0));
+        this.trajectoryPoints.push(new THREE.Vector3(x, y + 0.5, 0));
       }
     }
 
     this.updateTrajectoryLine();
     this.updateSceneElements();
-    this.updateProjectileScale();
     this.updateCameraPosition();
   }
 
   private updateTrajectoryLine() {
-    // Remover línea anterior si existe
-    if (this.trajectory) {
-      this.scene.remove(this.trajectory);
+    if (this.trajectoryLine) {
+      const geometry = new THREE.BufferGeometry().setFromPoints(this.trajectoryPoints);
+      this.trajectoryLine.geometry.dispose();
+      this.trajectoryLine.geometry = geometry;
     }
-
-    // Crear nueva línea de trayectoria
-    const geometry = new THREE.BufferGeometry().setFromPoints(this.trajectoryPoints);
-    const material = new THREE.LineBasicMaterial({
-      color: 0xff0000,
-      linewidth: 3,
-      transparent: true,
-      opacity: 0.7
-    });
-
-    this.trajectory = new THREE.Line(geometry, material);
-    this.scene.add(this.trajectory);
   }
 
   startSimulation() {
-    if (this.isSimulating) return;
+    if (this.isPlaying) return;
 
     this.calculateTrajectory();
-    this.isSimulating = true;
-    this.startTime = performance.now();
+    this.isPlaying = true;
+    this.time = 0;
+    this.trajectoryPoints = [];
+
+    // Limpiar trayectoria visual
+    if (this.trajectoryLine) {
+      const emptyGeometry = new THREE.BufferGeometry().setFromPoints([]);
+      this.trajectoryLine.geometry.dispose();
+      this.trajectoryLine.geometry = emptyGeometry;
+    }
 
     this.telemetry.event('start_simulation', {
-      v0: this.initialVelocity,
+      v0: this.velocity,
       angle: this.angle,
       g: this.gravity,
-      m: this.mass,
       h: this.height,
     });
 
-    this.animate();
+    // Actualizar física en intervalo
+    this.physicsInterval = window.setInterval(() => {
+      this.updatePhysics();
+    }, 50);
+  }
+
+  private updatePhysics() {
+    if (!this.isPlaying) return;
+
+    this.time += 0.05;
+    const angleRad = (this.angle * Math.PI) / 180;
+    const vx = this.velocity * Math.cos(angleRad);
+    const vy = this.velocity * Math.sin(angleRad);
+
+    const x = vx * this.time;
+    const y = this.height + vy * this.time - 0.5 * this.gravity * this.time * this.time;
+
+    if (y < 0) {
+      this.isPlaying = false;
+      if (this.physicsInterval) {
+        clearInterval(this.physicsInterval);
+        this.physicsInterval = undefined;
+      }
+      return;
+    }
+
+    this.position = { x, y };
+    this.currentVelocity = {
+      x: vx,
+      y: vy - this.gravity * this.time
+    };
+
+    // Actualizar contexto de simulación para el chat
+    this.updateSimulationContext();
+
+    // Actualizar posición de la bola
+    if (this.ball) {
+      this.ball.position.set(x * this.scale, (y + 0.5) * this.scale, 0);
+    }
+
+    // Agregar punto a la trayectoria
+    this.trajectoryPoints.push(new THREE.Vector3(
+      x * this.scale,
+      (y + 0.5) * this.scale,
+      0
+    ));
+
+    // Actualizar línea de trayectoria
+    if (this.trajectoryLine && this.trajectoryPoints.length > 1) {
+      const points = this.trajectoryPoints.slice(-100);
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      this.trajectoryLine.geometry.dispose();
+      this.trajectoryLine.geometry = geometry;
+    }
   }
 
   resetSimulation() {
-    this.isSimulating = false;
-    if (this.animationId) cancelAnimationFrame(this.animationId);
-    this.animationId = undefined;
+    this.isPlaying = false;
+    this.time = 0;
+    this.position = { x: 0, y: 0 };
+    this.currentVelocity = { x: 0, y: 0 };
+    this.trajectoryPoints = [];
 
-    if (this.projectile) {
-      this.projectile.position.set(0, this.height * this.scale, 0);
-      this.projectile.rotation.set(0, 0, 0);
+    if (this.physicsInterval) {
+      clearInterval(this.physicsInterval);
+      this.physicsInterval = undefined;
+    }
+
+    if (this.ball) {
+      this.ball.position.set(0, (this.height * this.scale) + 0.5, 0);
+      this.ball.rotation.set(0, 0, 0);
+    }
+
+    if (this.trajectoryLine) {
+      const emptyGeometry = new THREE.BufferGeometry().setFromPoints([]);
+      this.trajectoryLine.geometry.dispose();
+      this.trajectoryLine.geometry = emptyGeometry;
     }
 
     this.calculateTrajectory();
-    this.renderFrame();
+    this.updateSimulationContext();
   }
 
   onParamChange() {
-    if (!this.isSimulating) {
+    if (!this.isPlaying) {
       this.calculateTrajectory();
       this.resetSimulation();
     }
   }
 
   private animate = () => {
-    if (!this.isSimulating) return;
-
-    const elapsed = (performance.now() - this.startTime) / 1000;
-
-    if (elapsed >= this.flightTime) {
-      // Simulación terminada
-      const finalX = this.range * this.scale;
-      this.projectile.position.set(finalX, 0, 0);
-      this.isSimulating = false;
-      this.telemetry.event('end_projectile_motion', { t: elapsed });
-      this.renderFrame();
-      return;
-    }
-
-    // Calcular posición actual
-    const angleRad = (this.angle * Math.PI) / 180;
-    const vx = this.initialVelocity * Math.cos(angleRad);
-    const vy = this.initialVelocity * Math.sin(angleRad);
-
-    const x = vx * elapsed * this.scale;
-    const y = (this.height + vy * elapsed - 0.5 * this.gravity * elapsed * elapsed) * this.scale;
-
-    this.projectile.position.set(x, Math.max(y, 0), 0);
-
-    // Rotación del proyectil
-    this.projectile.rotation.x += 0.1;
-    this.projectile.rotation.y += 0.05;
-
-    this.renderFrame();
     this.animationId = requestAnimationFrame(this.animate);
-  };
 
-  private renderFrame() {
-    if (!this.renderer || !this.scene || !this.camera) {
-      console.warn('Renderer, scene o camera no están inicializados');
-      return;
+    if (this.renderer && this.scene && this.camera) {
+      this.renderer.render(this.scene, this.camera);
     }
-    this.renderer.render(this.scene, this.camera);
-  }
+  };
 
   private updateCameraPosition() {
     if (!this.camera) return;
@@ -323,7 +358,6 @@ export class TiroParabolicoComponent implements AfterViewInit, OnDestroy {
     const scaledRange = this.range * this.scale;
     const scaledMaxHeight = this.maxHeight * this.scale;
 
-    // Calcular posición óptima de la cámara
     const cameraX = scaledRange * 0.6;
     const cameraY = Math.max(10, scaledMaxHeight * 1.5);
     const cameraZ = Math.max(20, scaledRange * 0.8);
@@ -343,14 +377,9 @@ export class TiroParabolicoComponent implements AfterViewInit, OnDestroy {
     const floorSize = Math.max(100, scaledRange * 2);
     this.floor = new THREE.Mesh(
       new THREE.PlaneGeometry(floorSize, floorSize),
-      new THREE.MeshStandardMaterial({
-        color: 0x228B22,
-        metalness: 0.1,
-        roughness: 0.8,
-      })
+      new THREE.MeshLambertMaterial({ color: 0x4a9d4a })
     );
     this.floor.rotation.x = -Math.PI / 2;
-    this.floor.receiveShadow = true;
     this.scene.add(this.floor);
 
     // Actualizar helpers
@@ -363,20 +392,29 @@ export class TiroParabolicoComponent implements AfterViewInit, OnDestroy {
 
     const gridSize = Math.max(50, scaledRange * 1.5);
     const gridDivisions = Math.min(50, Math.max(10, Math.floor(gridSize / 2)));
-    this.gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0x444444, 0x222222);
+    this.gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0x444444, 0x888888);
     this.scene.add(this.gridHelper);
   }
 
-  private updateProjectileScale() {
-    if (!this.projectile) return;
-
-    // Ajustar el tamaño del proyectil basado en la escala
-    const baseSize = 0.5;
-    const scaledSize = Math.max(0.2, Math.min(2, baseSize * this.scale));
-    this.projectile.scale.set(scaledSize, scaledSize, scaledSize);
+  private updateSimulationContext() {
+    this.simulationContext = {
+      topic: 'Tiro Parabólico (Movimiento Parabólico)',
+      velocity: this.velocity,
+      angle: this.angle,
+      gravity: this.gravity,
+      height: this.height,
+      time: this.time,
+      position: this.position,
+      currentVelocity: this.currentVelocity
+    };
   }
 
-  activateAR() {
-    alert('Modo RA para tiro parabólico (placeholder).');
+  toggleChat() {
+    this.showChat = !this.showChat;
+    this.updateSimulationContext();
+  }
+
+  closeChat() {
+    this.showChat = false;
   }
 }

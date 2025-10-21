@@ -1,0 +1,60 @@
+<div class="chat-overlay" *ngIf="isVisible" (click)="closeModal()">
+  <div class="chat-container" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="chat-header">
+      <div class="header-content">
+        <i class="pi pi-comments"></i>
+        <h3>Tutor IA de Física</h3>
+      </div>
+      <button class="close-btn" (click)="closeModal()" aria-label="Cerrar chat">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+
+    <!-- Messages Area -->
+    <div class="chat-messages">
+      <div *ngIf="messages.length === 0" class="welcome-message">
+        <p>👋 ¡Hola! Soy tu tutor de física.</p>
+        <p class="welcome-subtitle">Pregúntame sobre los conceptos, las fórmulas o la simulación actual.</p>
+      </div>
+
+      <div *ngFor="let msg of messages"
+           class="message"
+           [class.user-message]="msg.role === 'user'"
+           [class.assistant-message]="msg.role === 'assistant'">
+        <div class="message-content">
+          <p [innerHTML]="msg.content | sanitizeHtml"></p>
+        </div>
+      </div>
+
+      <div *ngIf="isAiThinking" class="message assistant-message">
+        <div class="message-content thinking">
+          <p>Pensando...</p>
+          <div class="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="chat-input">
+      <input
+        type="text"
+        [(ngModel)]="inputMessage"
+        (keypress)="onKeyPress($event)"
+        placeholder="Escribe tu pregunta..."
+        [disabled]="isAiThinking"
+        class="input-field"
+      />
+      <button
+        (click)="sendMessage()"
+        [disabled]="isAiThinking || !inputMessage.trim()"
+        class="send-btn">
+        <i class="pi pi-send"></i>
+      </button>
+    </div>
+  </div>
+</div>
